@@ -35,15 +35,14 @@ def get_shapely(masks):
             pix = draw.polygon_perimeter(pix[:,0], pix[:,1], (mn.shape[0], mn.shape[1]))
             pix = np.array(pix).T[:,::-1]
             polygons[n] = Polygon(pix)
-        else:
-            polygons[n] = Polygon(np.zeros((0,2)))
+        # else:
+            # polygons[n] = Polygon(np.zeros((0,2)))
     return polygons
 
 
 def get_STRtree_per_channel(spots_df):
     trees = {}
-    for i in spots_df.Channel.unique():
-        spots = spots_df[spots_df.Channel == i]
+    for i, spots in spots_df.groupby('Channel'):
         points = [Point(spots.loc[ind, 'x'],
             spots.loc[ind, 'y'])
                 for ind in spots.index]
@@ -72,17 +71,22 @@ def main(args):
     trees = get_STRtree_per_channel(spots_df)
 
     spot_counts = {}
-    for n_cell in cells:
-        cell = cells[n_cell]
+    for cell_index in cells:
+        cell = cells[cell_index]
         current_counts = []
         for ch in trees:
             potential_inside = trees[ch].query(cell)
             true_in = [sp for sp in potential_inside if cell.contains(sp)]
             current_counts.append(len(true_in))
-        spot_counts[n_cell] = current_counts
+        spot_counts[cell_index] = current_counts
     df = pd.DataFrame(spot_counts).T
     df.rename(columns= {0:"ch1", 1:"ch2", 2:"ch3"},
             inplace=True)
+    n_total = [trees[i]._n_geoms for i in trees]
+    summary = pd.DataFrame({'Sum':df.sum(),
+            'Total_per_ch':n_total,
+            'Percentage':df.sum()/n_total})
+    summary.to_csv("%s_summary.csv" %stem)
     df.to_csv("%s_assigned_peaks.csv" %stem)
 
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env/ nextflow
 
 mag = '40x'
-params.img_path = "/nfs/RV_END/playground_Tong/Full_organoid_segs/assembled_" + mag + "/Assembled/*.tif"
+params.img_path = "/nfs/RV_END/playground_Tong/Full_organoid_segs/assembled_" + mag + "/*.tif"
 params.peak_folders_path = "/nfs/RV_END/playground_Tong/Full_organoid_segs/" + mag + "_peaks/"
 img_paths = Channel.fromPath(params.img_path)
 // filePairs = Channel.fromFilePairs("/nfs/RV_END/playground_Tong/Full_organoid_segs/**ome_{cyto_diam_90_assembled.tif, peaks.csv}")
@@ -17,6 +17,7 @@ process assign {
 
     output:
 	path "*_assigned_peaks.csv" into peaks_in_cells
+	path "*_summary.csv" into peaks_in_cells_summary
     """
 	python ${workflow.projectDir}/assign.py -img_in $img_p -spot_csv_dir $params.peak_folders_path
     """
