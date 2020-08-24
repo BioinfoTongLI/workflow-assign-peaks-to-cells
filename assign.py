@@ -14,29 +14,45 @@ import pandas as pd
 import tifffile as tf
 import numpy as np
 import cv2
-from skimage import draw
-from skimage.segmentation import find_boundaries
+# from skimage.segmentation import find_boundaries
+import scipy
 from shapely.strtree import STRtree
 from shapely.geometry import Polygon, Point
 from scipy.ndimage import labeled_comprehension
 import re
 
 
-def get_shapely(masks):
-    """ get outlines of masks as a list to loop over for plotting """
+def get_shapely(label):
+    """
+    Borrowed from Cellpose
+    get outlines of masks as a list to loop over for plotting
+    """
     polygons={}
-    for n in np.unique(masks)[1:]:
-        mn = masks==n
-        _, contours, _ = cv2.findContours(mn.astype(np.uint8), mode=cv2.RETR_LIST, method=cv2.CHAIN_APPROX_SIMPLE)
-        cmax = np.argmax([c.shape[0] for c in contours])
-        pix = contours[cmax].astype(int).squeeze()
-        if len(pix)>4:
-            pix=pix[:,::-1]
-            pix = draw.polygon_perimeter(pix[:,0], pix[:,1], (mn.shape[0], mn.shape[1]))
-            pix = np.array(pix).T[:,::-1]
-            polygons[n] = Polygon(pix)
-        # else:
-            # polygons[n] = Polygon(np.zeros((0,2)))
+    slices = scipy.ndimage.find_objects(label)
+    for i, bbox in enumerate(slices):
+        if not bbox:
+            continue
+        cur_cell_label = i + 1
+        msk = label[bbox[0], bbox[1]] == cur_cell_label
+        _, cnts, _ = \
+            cv2.findContours(
+                    msk.astype(np.uint8),
+                    cv2.RETR_LIST,
+                    cv2.CHAIN_APPROX_SIMPLE
+                    )
+        # Multiple split objects is possible, find the largest one
+        largest_index = 0
+        if len(cnts) > 1:
+            largest_index = np.argmax(
+                    [cv2.contourArea(cnt) for cnt in cnts]
+                    )
+        if cnts[largest_index].shape[0] <= 3:
+            continue # Cell roi too small (only 2-pixel)
+        pt = Polygon(
+                (cnts[largest_index] + [bbox[1].start, bbox[0].start]).squeeze()
+                )
+        # print(pt)
+        polygons[cur_cell_label] = pt
     return polygons
 
 
@@ -71,14 +87,24 @@ def main(args):
     trees = get_STRtree_per_channel(spots_df)
 
     spot_counts = {}
+    ys, xs, chs, cell_indexes = [], [], [], []
     for cell_index in cells:
         cell = cells[cell_index]
         current_counts = []
+        spots_in = {}
         for ch in trees:
             potential_inside = trees[ch].query(cell)
             true_in = [sp for sp in potential_inside if cell.contains(sp)]
+            spots_in[ch] = [(sp.y, sp.x) for sp in true_in]
+            for sp in true_in:
+                ys.append(sp.y)
+                xs.append(sp.x)
+                chs.append(ch)
+                cell_indexes.append(cell_index)
             current_counts.append(len(true_in))
         spot_counts[cell_index] = current_counts
+    spots_df = pd.DataFrame({"y":ys, "x":xs, "ch":chs, "ID":cell_indexes}).set_index("ID")
+    spots_df.to_csv("%s_peaks.csv" %stem)
     df = pd.DataFrame(spot_counts).T
     df.rename(columns= {0:"ch1", 1:"ch2", 2:"ch3"},
             inplace=True)
@@ -87,7 +113,7 @@ def main(args):
             'Total_per_ch':n_total,
             'Percentage':df.sum()/n_total})
     summary.to_csv("%s_summary.csv" %stem)
-    df.to_csv("%s_assigned_peaks.csv" %stem)
+    df.to_csv("%s_peak_counts.csv" %stem)
 
 
 if __name__ == "__main__":
