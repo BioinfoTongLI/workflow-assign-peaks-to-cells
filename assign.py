@@ -42,10 +42,6 @@ def get_shapely(label):
                     )
         # Multiple split objects is possible, find the largest one
         largest_index = 0
-        if len(cnts) > 1:
-            largest_index = np.argmax(
-                    [cv2.contourArea(cnt) for cnt in cnts]
-                    )
         if cnts[largest_index].shape[0] <= 3:
             continue # Cell roi too small (only 2-pixel)
         pt = Polygon(
@@ -67,19 +63,14 @@ def get_STRtree_per_channel(spots_df):
     return trees
 
 
-# def shapely_fast(mark):
-    # mark[find_boundaries(mark, mode='inner')] = 0
-    # mark[:,[0,-1]], mark[[0,-1],:] = 0, 0   # if we want leave the mark touch the border
-    # _, contours, hierarchy = cv2.findContours((mark==0).astype(np.uint8), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
-    # print(hierarchy)
-    # contours = [contours[i] for i in np.where(hierarchy[0,:,3]>0)[0]] # only inner contours is needed
-    # print(contours)
-
-
 def main(args):
     stem = re.search(r'(.*ome)_.*', args.img_in).group(1)
     label = tf.imread(args.img_in)
-    cells = get_shapely(label)
+    mask = tf.imread(args.mask_dir + stem + "_DAPI_Atto_425.tif")
+    masked_label = label * (mask == 2)
+    # print(len(np.unique(label, return_counts=True)[0]))
+    # print(len(np.unique(masked_label, return_counts=True)[0]))
+    cells = get_shapely(masked_label)
 
     # Get the STRtree of spots
     spots_df = pd.read_csv("%s/%s_peaks.csv"
@@ -121,6 +112,8 @@ if __name__ == "__main__":
 
     parser.add_argument("-img_in", type=str,
             required=True)
+    parser.add_argument("-mask_dir", type=str,
+            required=False)
     parser.add_argument("-spot_csv_dir", type=str,
             required=True)
 
