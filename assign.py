@@ -54,7 +54,11 @@ def get_shapely(label):
 
 def get_STRtree_per_channel(spots_df):
     trees = {}
-    for i, spots in spots_df.groupby('Channel'):
+    if 'ch' in spots_df.columns:
+        ch_col_name = 'ch'
+    else:
+        ch_col_name = 'Channel'
+    for i, spots in spots_df.groupby(ch_col_name):
         points = [Point(spots.loc[ind, 'x'],
             spots.loc[ind, 'y'])
                 for ind in spots.index]
@@ -64,17 +68,17 @@ def get_STRtree_per_channel(spots_df):
 
 
 def main(args):
-    stem = re.search(r'(.*ome)_.*', args.img_in).group(1)
-    label = tf.imread(args.img_in)
-    mask = tf.imread(args.mask_dir + stem + "_DAPI_Atto_425.tif")
+    stem = re.search(r'(.*ome)_.*', args.label).group(1)
+    label = tf.imread(args.label)
+    mask = tf.imread(args.mask)
     masked_label = label * (mask == 2)
     # print(len(np.unique(label, return_counts=True)[0]))
     # print(len(np.unique(masked_label, return_counts=True)[0]))
     cells = get_shapely(masked_label)
 
     # Get the STRtree of spots
-    spots_df = pd.read_csv("%s/%s_peaks.csv"
-            %(args.spot_csv_dir, stem))
+    spots_df = pd.read_csv(args.peak)
+    print(spots_df)
     trees = get_STRtree_per_channel(spots_df)
 
     spot_counts = {}
@@ -95,7 +99,7 @@ def main(args):
             current_counts.append(len(true_in))
         spot_counts[cell_index] = current_counts
     spots_df = pd.DataFrame({"y":ys, "x":xs, "ch":chs, "ID":cell_indexes}).set_index("ID")
-    spots_df.to_csv("%s_peaks.csv" %stem)
+    spots_df.to_csv("%s_assigned_peaks.csv" %stem)
     df = pd.DataFrame(spot_counts).T
     df.rename(columns= {0:"ch1", 1:"ch2", 2:"ch3"},
             inplace=True)
@@ -110,11 +114,11 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-img_in", type=str,
+    parser.add_argument("-label", type=str,
             required=True)
-    parser.add_argument("-mask_dir", type=str,
+    parser.add_argument("-peak", type=str,
             required=False)
-    parser.add_argument("-spot_csv_dir", type=str,
+    parser.add_argument("-mask", type=str,
             required=True)
 
     args = parser.parse_args()
