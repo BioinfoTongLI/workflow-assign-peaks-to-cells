@@ -1,14 +1,27 @@
 #!/usr/bin/env/ nextflow
 
-mag = '40x'
-params.labels = "/nfs/RV_END/playground_Tong/Full_organoid_segs/assembled_" + mag + "/*.tif"
-params.peaks = "/nfs/RV_END/playground_Tong/Full_organoid_segs/" + mag + "_peaks/"
-params.masks = "/nfs/RV_END/playground_Tong/Full_organoid_segs/Filtered_" + mag + "/"
-params.outdir = ""
+params.labels = "/nfs/team283_imaging/AC_LNG/playground_Tong/stardist_segs/*.tif"
+params.peaks = "/nfs/team283_imaging/AC_LNG/playground_Tong/anchor-spot_location/*.csv"
+params.masks = ""
+params.outdir = "/nfs/team283_imaging/AC_LNG/playground_Tong/assigned_spots"
 
-label_paths = Channel.fromPath(params.labels)
-peak_paths = Channel.fromPath(params.peaks)
-mask_paths = Channel.fromPath(params.masks)
+Channel.fromPath(params.labels)
+    .map{it -> [file(file(it).baseName).baseName, it]}
+    .set{label_paths}
+Channel.fromPath(params.peaks)
+    .map{it -> [file(file(it).baseName).baseName, it]}
+    .set{peak_paths}
+
+if (params.masks != ""){
+    Channel.fromPath(params.masks)
+        .map{it -> [file(it).baseName, it]}
+        .set{mask_paths}
+    //todo
+}else{
+    label_paths
+        .combine(peak_paths, by:0)
+        .set{to_assign}
+}
 
 process assign {
     /*errorStrategy 'ignore'*/
@@ -17,18 +30,20 @@ process assign {
     publishDir params.outdir, mode:'copy'
 
     //maxForks 1
+    when:
+    params.masks == ""
 
     input:
-	path lab from label_paths
-	path peak from peak_paths
-	path mask from mask_paths
+    tuple stem, lab, peak from to_assign
 
     output:
-    path "*_peaks.csv" into peaks_in_cells
+    path "*_assigned_peaks.csv" into peaks_in_cells
     path "*_summary.csv" into peaks_in_cells_summary
-    path "*_counts.csv" into peaks_counts
+    path "*_peak_counts.csv" into peaks_counts
+
+    script:
     """
-	python ${workflow.projectDir}/assign.py -label $lab -peak $peak -mask $mask
+    python ${workflow.projectDir}/assign.py -stem ${stem} -label $lab -peak $peak
     """
 }
 

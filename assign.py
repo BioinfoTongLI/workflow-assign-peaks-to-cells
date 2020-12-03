@@ -20,6 +20,8 @@ from shapely.strtree import STRtree
 from shapely.geometry import Polygon, Point
 from scipy.ndimage import labeled_comprehension
 import re
+import os
+from pathlib import Path
 
 
 def get_shapely(label):
@@ -68,10 +70,13 @@ def get_STRtree_per_channel(spots_df):
 
 
 def main(args):
-    stem = re.search(r'(.*ome)_.*', args.label).group(1)
     label = tf.imread(args.label)
-    mask = tf.imread(args.mask)
-    masked_label = label * (mask == 2)
+    if args.mask:
+        mask = tf.imread(args.mask)
+        masked_label = label * (mask == 2)
+    else:
+        print("Mask doesn't exist, skipped")
+        masked_label = label
     # print(len(np.unique(label, return_counts=True)[0]))
     # print(len(np.unique(masked_label, return_counts=True)[0]))
     cells = get_shapely(masked_label)
@@ -99,7 +104,7 @@ def main(args):
             current_counts.append(len(true_in))
         spot_counts[cell_index] = current_counts
     spots_df = pd.DataFrame({"y":ys, "x":xs, "ch":chs, "ID":cell_indexes}).set_index("ID")
-    spots_df.to_csv("%s_assigned_peaks.csv" %stem)
+    spots_df.to_csv("%s_assigned_peaks.csv" %args.stem)
     df = pd.DataFrame(spot_counts).T
     df.rename(columns= {0:"ch1", 1:"ch2", 2:"ch3"},
             inplace=True)
@@ -107,19 +112,20 @@ def main(args):
     summary = pd.DataFrame({'Sum':df.sum(),
             'Total_per_ch':n_total,
             'Percentage':df.sum()/n_total})
-    summary.to_csv("%s_summary.csv" %stem)
-    df.to_csv("%s_peak_counts.csv" %stem)
+    summary.to_csv("%s_summary.csv" %args.stem)
+    df.to_csv("%s_peak_counts.csv" %args.stem)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
+    parser.add_argument("-stem", type=str,
+            required=True)
     parser.add_argument("-label", type=str,
             required=True)
     parser.add_argument("-peak", type=str,
             required=False)
-    parser.add_argument("-mask", type=str,
-            required=True)
+    parser.add_argument("-mask", type=str)
 
     args = parser.parse_args()
 
