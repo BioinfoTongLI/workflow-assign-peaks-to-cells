@@ -14,9 +14,12 @@ Channel.fromPath(params.peaks)
 
 if (params.masks != ""){
     Channel.fromPath(params.masks)
-        .map{it -> [file(it).baseName, it]}
+        .map{it -> [file(file(it).baseName).baseName, it]}
         .set{mask_paths}
     //todo
+    label_paths.combine(peak_paths, by:0).combine(mask_paths, by:0)
+        .set{to_assign}
+
 }else{
     label_paths
         .combine(peak_paths, by:0)
@@ -30,11 +33,9 @@ process assign {
     publishDir params.outdir, mode:'copy'
 
     //maxForks 1
-    when:
-    params.masks == ""
 
     input:
-    tuple stem, lab, peak from to_assign
+    tuple stem, lab, peak, mask from to_assign
 
     output:
     path "*_assigned_peaks.csv" into peaks_in_cells
@@ -43,7 +44,7 @@ process assign {
 
     script:
     """
-    python ${workflow.projectDir}/assign.py -stem ${stem} -label $lab -peak $peak
+    python ${workflow.projectDir}/assign.py -stem "${stem}" -label "$lab" -peak "$peak" -mask "${mask}"
     """
 }
 
