@@ -1,0 +1,6 @@
+labels : "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_nf_out/nuclei_segmentation/out_with_anchors.ome_opt_flow_registered_158.ome_label_expanded.tif"
+peaks : "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_nf_out/decoded/out_with_anchors.ome_opt_flow_registered_158.ome_decoded_df.tsv"
+masks   : ""
+outdir  : "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_nf_out/spot_counts_per_cell/"
+target_col : "Name"
+separator : "\t"

@@ -1,0 +1,9 @@
+name: assign-peaks-to-cells
+channels:
+  - conda-forge
+dependencies:
+  - opencv
+  - scikit-image
+  - pandas
+  - shapely
+  - imagecodecs
