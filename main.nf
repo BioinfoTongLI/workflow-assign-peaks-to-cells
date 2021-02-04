@@ -26,22 +26,54 @@ if (params.masks != ""){
 }
 
 label_paths
-    .combine(peak_paths, by:0)
     .combine(mask_paths, by:0)
     .set{to_assign}
 
+process Label_image_to_shapely {
+    echo true
+    conda baseDir + "/conda.yaml"
+    publishDir params.outdir, mode:'copy'
+
+    input:
+    tuple stem, lab, mask from to_assign
+
+    output:
+    tuple val(stem), file("cell_shapely.pickle") into cell_shapely
+
+    script:
+    """
+    python ${baseDir}/label_to_shapely.py -label "$lab" -mask "${mask}"
+    """
+}
+
+
+process Build_STR_trees_per_channel {
+    echo true
+    conda baseDir + "/conda.yaml"
+
+    input:
+    tuple stem, peak from peak_paths
+
+    output:
+    tuple val(stem), file("str_peaks.pickle") into str_peaks
+
+    script:
+    """
+    python ${baseDir}/str_indexing.py -peak ${peak} -target_ch "${params.target_col}" -sep "${params.separator}"
+    """
+}
+
 
 process Assign {
-    /*errorStrategy 'ignore'*/
     echo true
-    conda "/home/ubuntu/.conda/envs/assign-peaks-to-cells"
+    conda baseDir + "/conda.yaml"
     publishDir params.outdir, mode:'copy'
     /*storeDir params.outdir*/
 
     //maxForks 1
 
     input:
-    tuple stem, lab, peak, mask from to_assign
+    tuple stem, cells, peaks from cell_shapely.combine(str_peaks, by:0)
 
     output:
     file "*_assigned_peaks.csv" into peaks_in_cells
@@ -51,7 +83,7 @@ process Assign {
 
     script:
     """
-    python ${baseDir}/assign.py -stem "${stem}" -label "$lab" -peak "$peak" -mask "${mask}" -target_ch "${params.target_col}" -sep "${params.separator}"
+    python ${baseDir}/assign.py -stem "${stem}" -cells "$cells" -peaks "$peaks"
     """
 }
 
@@ -78,6 +110,5 @@ process Cell_filtering {
     """
     python ${baseDir}/cell_filtering.py -assigned_peaks "${assigned_peaks}" -peak_counts_in_cells ${peak_counts_in_cell} -centroids ${centroids} -threshold_n_spots 15 -assigned_peaks_stem ${stem_assigned_peaks} -peak_counts_stem ${stem_peak_counts} -centroid_stem ${stem_centroid}
     """
-
 }
 
