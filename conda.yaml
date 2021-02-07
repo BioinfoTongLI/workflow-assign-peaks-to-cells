@@ -4,6 +4,7 @@ channels:
 dependencies:
   - opencv
   - scikit-image
+  - dask
   - pandas
   - shapely
   - imagecodecs

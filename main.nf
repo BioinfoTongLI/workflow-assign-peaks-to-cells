@@ -1,11 +1,15 @@
 #!/usr/bin/env/ nextflow
 
-params.labels = "/nfs/team283_imaging/AC_LNG/playground_Tong/stardist_segs/*.tif"
-params.peaks = "/nfs/team283_imaging/AC_LNG/playground_Tong/anchor-spot_location/*.csv"
+params.labels = "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_human_brain_158_DAPI_registered_40x/cell_seg/out.label_expanded.tif"
+params.peaks = "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_human_brain_158_DAPI_registered_40x/decoded/out.decoded_df.tsv"
 params.masks = ""
-params.outdir = "/nfs/team283_imaging/AC_LNG/playground_Tong/assigned_spots"
-params.target_col = "Channel"
-params.separator = ","
+params.target_col = "Name"
+params.separator = "\t"
+params.to_grid = true
+params.tilesize_x = 700
+params.tilesize_y = 700
+params.outdir = "/nfs/team283_imaging/JSP_HSS/playground_Tong/Grid_count_human_brain_158/peaks_assigned_to_grid_" + params.tilesize_x + "_" + params.tilesize_y
+
 
 
 Channel.fromPath(params.labels)
@@ -13,7 +17,7 @@ Channel.fromPath(params.labels)
     .set{label_paths}
 Channel.fromPath(params.peaks)
     .map{it -> [file(file(it).baseName).baseName, it]}
-    .set{peak_paths}
+    .into{peak_paths; peaks_to_get_grid}
 
 if (params.masks != ""){
     Channel.fromPath(params.masks)
@@ -29,27 +33,37 @@ label_paths
     .combine(mask_paths, by:0)
     .set{to_assign}
 
-process Label_image_to_shapely {
+process Get_shapely_objects {
     echo true
     conda baseDir + "/conda.yaml"
     publishDir params.outdir, mode:'copy'
 
     input:
     tuple stem, lab, mask from to_assign
+    tuple stem, peak from peaks_to_get_grid
+    val tilesize_x from params.tilesize_x
+    val tilesize_y from params.tilesize_y
 
     output:
-    tuple val(stem), file("cell_shapely.pickle") into cell_shapely
+    tuple val(stem), file("*_shapely.pickle") into cell_shapely
 
     script:
-    """
-    python ${baseDir}/label_to_shapely.py -label "$lab" -mask "${mask}"
-    """
+    if (!params.to_grid){
+        """
+        python ${baseDir}/label_to_shapely.py -label "$lab" -mask "${mask}"
+        """
+    } else {
+        """
+        python ${baseDir}/generate_grid.py -stem "${stem}" -tilesize_x ${tilesize_x} -tilesize_y ${tilesize_y} -csv_in "${peak}" -target_ch "${params.target_col}" -sep "${params.separator}"
+        """
+    }
 }
 
 
 process Build_STR_trees_per_channel {
     echo true
     conda baseDir + "/conda.yaml"
+    storeDir params.outdir
 
     input:
     tuple stem, peak from peak_paths
@@ -68,7 +82,6 @@ process Assign {
     echo true
     conda baseDir + "/conda.yaml"
     publishDir params.outdir, mode:'copy'
-    /*storeDir params.outdir*/
 
     //maxForks 1
 
