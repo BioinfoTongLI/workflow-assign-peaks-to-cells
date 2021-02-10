@@ -30,12 +30,14 @@ def generate_cells(min_x, max_x, min_y, max_y):
     shapely_cells = {}
     for x_ind in range(len(grid_x_start)):
         for y_ind in range(len(grid_y_start)):
-            pt = Polygon([
-                (grid_x_start[x_ind], grid_y_start[y_ind]),
-                (grid_x_end[x_ind], grid_y_start[y_ind]),
-                (grid_x_end[x_ind], grid_y_end[y_ind]),
-                (grid_x_start[x_ind], grid_y_end[y_ind]),
-                ])
+            pt = Polygon(
+                [
+                    (grid_x_start[x_ind], grid_y_start[y_ind]),
+                    (grid_x_end[x_ind], grid_y_start[y_ind]),
+                    (grid_x_end[x_ind], grid_y_end[y_ind]),
+                    (grid_x_start[x_ind], grid_y_end[y_ind]),
+                ]
+            )
             shapely_cells[count] = pt
             count += 1
     return shapely_cells
@@ -43,16 +45,24 @@ def generate_cells(min_x, max_x, min_y, max_y):
 
 def main(args):
     df = dd.read_csv(args.csv_in, sep=args.sep)
-    mask = (df[args.target_ch] != "background") & (df[args.target_ch] != "infeasible") & (~df[args.target_ch].isna())
+    mask = (
+        (df[args.target_ch] != "background")
+        & (df[args.target_ch] != "infeasible")
+        & (~df[args.target_ch].isna())
+    )
     assigned_df = df[mask]
     max_x, min_x, max_y, min_y = dask.compute(
-            assigned_df.X.max() + args.tilesize_x,
-            assigned_df.X.min() - args.tilesize_x,
-            assigned_df.Y.max() + args.tilesize_y,
-            assigned_df.Y.min() - args.tilesize_y
+        assigned_df.X.max() + args.tilesize_x,
+        assigned_df.X.min() - args.tilesize_x,
+        assigned_df.Y.max() + args.tilesize_y,
+        assigned_df.Y.min() - args.tilesize_y,
+    )
+    with open("%s_shapely.pickle" % args.stem, "wb") as handle:
+        pickle.dump(
+            generate_cells(min_x, max_x, min_y, max_y),
+            handle,
+            protocol=pickle.HIGHEST_PROTOCOL,
         )
-    with open("%s_shapely.pickle" %args.stem, "wb") as handle:
-        pickle.dump(generate_cells(min_x, max_x, min_y, max_y), handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == "__main__":
