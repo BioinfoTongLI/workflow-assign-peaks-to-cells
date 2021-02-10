@@ -1,0 +1,7 @@
+labels : "/nfs/team283_imaging/playground_Tong/batch_qc/PC_LIV_PC00005_CL6VII_Nucleus_all_RCPs_Meas8b_A2_F1T0_max.ome_nuclei_diam_35_assembled.tif"
+peaks : "/nfs/team283_imaging/PC_LIV/playground_Tong/PC_LIV_20x/decoded/human_liver_103_20x_reg_double_feature_reg_16_16.ome_decoded_df.tsv"
+masks   : ""
+outdir  : "/nfs/team283_imaging/PC_LIV/playground_Tong/PC_LIV_20x_peak_counts/"
+target_col : "Name"
+separator : "\t"
+to_grid : false
