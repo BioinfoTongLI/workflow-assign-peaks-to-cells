@@ -63,7 +63,8 @@ process Get_shapely_objects {
 process Build_STR_trees_per_channel {
     echo true
     conda baseDir + "/conda.yaml"
-    storeDir params.outdir
+    /*storeDir params.outdir*/
+    publishDir params.outdir, mode:"copy"
 
     input:
     tuple stem, peak from peak_paths
