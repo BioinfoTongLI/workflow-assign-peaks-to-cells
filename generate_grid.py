@@ -45,17 +45,21 @@ def generate_cells(min_x, max_x, min_y, max_y):
 
 def main(args):
     df = dd.read_csv(args.csv_in, sep=args.sep)
-    mask = (
-        (df[args.target_ch] != "background")
-        & (df[args.target_ch] != "infeasible")
-        & (~df[args.target_ch].isna())
-    )
-    assigned_df = df[mask]
+    df.columns = map(str.lower, df.columns)
+    if args.target_ch != "":
+        mask = (
+            (df[args.target_ch] != "background")
+            & (df[args.target_ch] != "infeasible")
+            & (~df[args.target_ch].isna())
+        )
+        assigned_df = df[mask]
+    else:
+        assigned_df = df
     max_x, min_x, max_y, min_y = dask.compute(
-        assigned_df.X.max() + args.tilesize_x,
-        assigned_df.X.min() - args.tilesize_x,
-        assigned_df.Y.max() + args.tilesize_y,
-        assigned_df.Y.min() - args.tilesize_y,
+        assigned_df.x.max() + args.tilesize_x,
+        assigned_df.x.min() - args.tilesize_x,
+        assigned_df.y.max() + args.tilesize_y,
+        assigned_df.y.min() - args.tilesize_y,
     )
     with open("%s_shapely.pickle" % args.stem, "wb") as handle:
         pickle.dump(
