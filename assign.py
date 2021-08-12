@@ -12,13 +12,14 @@ Assign peaks in .csv to labelled image
 import argparse
 import pandas as pd
 import pickle
+import fire
 
 
-def main(args):
-    with open(args.cells, "rb") as handle:
+def main(peaks, cells, stem="out"):
+    with open(cells, "rb") as handle:
         cells = pickle.load(handle)
 
-    with open(args.peaks, "rb") as handle:
+    with open(peaks, "rb") as handle:
         trees = pickle.load(handle)
 
     spot_counts = {}
@@ -43,13 +44,13 @@ def main(args):
     spots_df = pd.DataFrame(
         {"y": ys, "x": xs, "ch": chs, "ID": cell_indexes}
     ).set_index("ID")
-    spots_df.to_csv("%s_assigned_peaks.csv" % args.stem)
+    spots_df.to_csv(f"{stem}_assigned_peaks.csv")
 
     count_df = pd.DataFrame(spot_counts).T
-    count_df.to_csv("%s_peak_counts.csv" % args.stem)
+    count_df.to_csv(f"{stem}_peak_counts.csv")
 
     centroid_df = pd.DataFrame(cell_centroids).T
-    centroid_df.to_csv("%s_cell_centroids.csv" % args.stem)
+    centroid_df.to_csv(f"{stem}_cell_centroids.csv")
 
     n_total = [trees[i]._n_geoms for i in trees]
     summary = pd.DataFrame(
@@ -59,16 +60,8 @@ def main(args):
             "Percentage": count_df.sum() / n_total,
         }
     )
-    summary.to_csv("%s_summary.csv" % args.stem)
+    summary.to_csv(f"{stem}_summary.csv")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("-stem", type=str, required=True)
-    parser.add_argument("-peaks", type=str, required=True)
-    parser.add_argument("-cells", type=str, required=True)
-
-    args = parser.parse_args()
-
-    main(args)
+    fire.Fire(main)

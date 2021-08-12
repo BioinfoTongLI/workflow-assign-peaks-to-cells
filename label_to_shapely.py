@@ -10,20 +10,21 @@
 
 """
 import argparse
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, MultiPolygon
 import cv2
 import numpy as np
 from scipy import ndimage
 import tifffile as tf
 import pickle
+import fire
 
 
 def get_shapely(label):
     """
-    Borrowed from Cellpose
     get outlines of masks as a list to loop over for plotting
     """
     polygons = {}
+    simpler_polys = {}
     slices = ndimage.find_objects(label)
     for i, bbox in enumerate(slices):
         if not bbox:
@@ -31,36 +32,27 @@ def get_shapely(label):
         cur_cell_label = i + 1
         msk = label[bbox[0], bbox[1]] == cur_cell_label
         cnts, _ = cv2.findContours(
-            msk.astype(np.uint8), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
+            msk.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
         )
-        # Multiple split objects is possible, find the largest one
-        largest_index = 0
-        if cnts[largest_index].shape[0] <= 3:
-            continue  # Cell roi too small (only 2-pixel)
-        pt = Polygon((cnts[largest_index] + [bbox[1].start, bbox[0].start]).squeeze())
-        # print(pt)
-        polygons[cur_cell_label] = pt
-    return polygons
+        if len(cnts) > 1:
+            print(len(cnts), cur_cell_label)
+        current_polygons = [
+            Polygon((cnt + [bbox[1].start, bbox[0].start]).squeeze())
+
+#             else Point((cnt + [bbox[1].start, bbox[0].start]).squeeze())
+            for cnt in cnts if len(cnt) > 2
+        ]
+        multipoly_obj = MultiPolygon(current_polygons)
+        polygons[cur_cell_label] = multipoly_obj
+        simpler_polys[cur_cell_label] = multipoly_obj.simplify(2, preserve_topology=True)
+    return polygons, simpler_polys
 
 
-def main(args):
-    label = tf.imread(args.label)
-    if args.mask:
-        mask = tf.imread(args.mask)
-        masked_label = label * (mask == 2)
-    else:
-        print("Mask doesn't exist, skipped")
-        masked_label = label
+def main(label):
     with open("cell_shapely.pickle", "wb") as handle:
-        pickle.dump(get_shapely(masked_label), handle, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(get_shapely(tf.imread(label))[0],
+                handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("-label", type=str, required=True)
-    parser.add_argument("-mask", type=str)
-
-    args = parser.parse_args()
-
-    main(args)
+    fire.Fire(main)

@@ -1,0 +1,6 @@
+labels : "/nfs/team283_imaging/JSP_HSS/playground_Tong/20210811_human_brain_158_20x_algo_RLOF/cellpose_seg/out_opt_flow_registered_label_expanded.tif"
+peaks : "/nfs/team283_imaging/JSP_HSS/playground_Tong/20210811_human_brain_158_20x_algo_RLOF/decoded/out_opt_flow_registered_decoded_df.tsv"
+masks   : ""
+out_dir  : "/nfs/team283_imaging/JSP_HSS/playground_Tong/20210811_human_brain_158_20x_algo_RLOF/spot_counts_per_cell/"
+target_col : "Name"
+separator : "\\t"

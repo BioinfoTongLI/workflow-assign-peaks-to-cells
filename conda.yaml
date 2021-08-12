@@ -9,4 +9,4 @@ dependencies:
   - shapely
   - imagecodecs
   - pip:
-    - pysnooper
+    - fire
