@@ -1,6 +1,0 @@
-labels : "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_FrFr_brain/nuclei_segmentation/out_OB10036_N1C_x20_optflow-DAPI_pyramid25.ome_label_expanded.tif"
-peaks : "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_FrFr_brain/anchor_peaks/out_OB10036_N1C_x20_optflow-DAPI_pyramid25.ome_label_expanded.tsv"
-masks   : ""
-outdir  : "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_FrFr_brain/spots_in_cells/"
-target_col : ""
-separator : "\t"

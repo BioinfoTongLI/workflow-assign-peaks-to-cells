@@ -15,7 +15,7 @@ params.out_dir = "./test"
 
 process Get_shapely_objects {
     echo true
-    conda baseDir + "/conda.yaml"
+    conda projectDir + "/conda.yaml"
     publishDir params.out_dir, mode:'copy'
 
     input:
@@ -33,11 +33,11 @@ process Get_shapely_objects {
     script:
     if (to_grid){
         """
-        python ${baseDir}/generate_grid.py -stem "${stem}" -tilesize_x ${tilesize_x} -tilesize_y ${tilesize_y} -csv_in "${peak}" -target_ch "${target_col}" -sep "${separator}"
+        generate_grid.py -stem "${stem}" -tilesize_x ${tilesize_x} -tilesize_y ${tilesize_y} -csv_in "${peak}" -target_ch "${target_col}" -sep "${separator}"
         """
     } else {
         """
-        python ${baseDir}/label_to_shapely.py -label "${lab}"
+        label_to_shapely.py -label "${lab}"
         """
     }
 }
@@ -45,7 +45,7 @@ process Get_shapely_objects {
 
 process Build_STR_trees_per_channel {
     echo true
-    conda baseDir + "/conda.yaml"
+    conda projectDir + "/conda.yaml"
     /*storeDir params.out_dir*/
     publishDir params.out_dir, mode:"copy"
 
@@ -59,17 +59,15 @@ process Build_STR_trees_per_channel {
 
     script:
     """
-    python ${baseDir}/str_indexing.py -peak ${peak} -target_ch "${target_col}" -sep "${separator}"
+    str_indexing.py -peak ${peak} -target_ch "${target_col}" -sep "${separator}"
     """
 }
 
 
 process Assign {
-    echo true
-    conda baseDir + "/conda.yaml"
+    /*echo true*/
+    conda projectDir + "/conda.yaml"
     publishDir params.out_dir, mode:'copy'
-
-    //maxForks 1
 
     input:
     path(cells)
@@ -83,7 +81,7 @@ process Assign {
 
     script:
     """
-    python ${baseDir}/assign.py -cells "$cells" -peaks "$peaks"
+    assign.py -cells "$cells" -peaks "$peaks"
     """
 }
 
@@ -93,7 +91,7 @@ process Assign {
 */
 process Cell_filtering {
     echo true
-    conda "/home/ubuntu/.conda/envs/assign-peaks-to-cells"
+    conda projectDir + "/conda.yaml"
     publishDir params.out_dir, mode:'copy'
 
     input:
@@ -111,7 +109,7 @@ process Cell_filtering {
     stem_peak_counts = file(peak_counts_in_cell).baseName
     stem_centroid = file(centroids).baseName
     """
-    python ${baseDir}/cell_filtering.py -assigned_peaks "${assigned_peaks}" -peak_counts_in_cells ${peak_counts_in_cell} -centroids ${centroids} -threshold_n_spots 15 -assigned_peaks_stem ${stem_assigned_peaks} -peak_counts_stem ${stem_peak_counts} -centroid_stem ${stem_centroid}
+    cell_filtering.py -assigned_peaks "${assigned_peaks}" -peak_counts_in_cells ${peak_counts_in_cell} -centroids ${centroids} -threshold_n_spots 15 -assigned_peaks_stem ${stem_assigned_peaks} -peak_counts_stem ${stem_peak_counts} -centroid_stem ${stem_centroid}
     """
 }
 

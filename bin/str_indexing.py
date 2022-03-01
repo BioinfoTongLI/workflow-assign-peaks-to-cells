@@ -23,7 +23,8 @@ def get_STRtree_per_channel(spots_df, ch_col_name):
     if ch_col_name != "":
         for i, spots in spots_df.groupby(ch_col_name):
             points = [
-                Point(spots.loc[ind, "x_int"], spots.loc[ind, "y_int"]) for ind in spots.index
+                Point(spots.loc[ind, "x_int"], spots.loc[ind, "y_int"])
+                for ind in spots.index
             ]
             trees[i] = STRtree(points)
     else:
@@ -39,9 +40,9 @@ def main(peak, target_ch, sep):
     spots_df = pd.read_csv(peak, sep=str(sep))
     # target_ch = "Name" if args.target_ch == "" else args.target_ch
     # spots_df = spots_df[
-        # (spots_df[target_ch] != "background")
-        # & (spots_df[target_ch] != "infeasible")
-        # & (~spots_df[target_ch].isna())
+    # (spots_df[target_ch] != "background")
+    # & (spots_df[target_ch] != "infeasible")
+    # & (~spots_df[target_ch].isna())
     # ]
     # print(spots_df.shape)
     with open("str_peaks.pickle", "wb") as handle:

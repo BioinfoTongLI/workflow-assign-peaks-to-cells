@@ -1,6 +1,0 @@
-labels : "/nfs/team283_imaging/playground_Tong/cellpose_stardist_compare/human_brain_small_crop_cellpose_seg_40x/JSP_HSS_OB10037_W9-BRA_Nucleus_RCPs_Meas5b_A3_F1T0_max.ome_label_expanded.tif"
-peaks : "/nfs/team283_imaging/playground_Tong/cellpose_stardist_compare/small/peaks/anchor_peaks/JSP_HSS_OB10037_W9-BRA_Nucleus_RCPs_Meas5b_A3_F1T0_max.anchor_peaks.tsv"
-masks   : ""
-outdir  : "/nfs/team283_imaging/playground_Tong/cellpose_stardist_compare/small/peak_counts_in_cells_cellpose/"
-target_col : ""
-separator : "\t"

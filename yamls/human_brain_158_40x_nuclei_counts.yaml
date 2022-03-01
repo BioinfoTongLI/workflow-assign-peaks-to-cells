@@ -1,7 +1,0 @@
-labels : "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_human_brain_158_DAPI_registered_40x/nuclei_segmentation/out.label_expanded.tif"
-peaks : "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_human_brain_158_DAPI_registered_40x/spot_counts_per_cell_cellpose_seg_all_genes/out_cell_centroids.csv"
-masks   : ""
-outdir  : "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_human_brain_158_DAPI_registered_40x/nuclei_count_per_tile/"
-target_col : ""
-separator : ","
-o_grid   : true

@@ -1,6 +1,0 @@
-labels : "/nfs/team283_imaging/AC_LNG/playground_Tong/gmm_decoding_FrFr_lung/nuclei_segmentation/OB01011_I2B_x20_optflow-DAPI_pyramid25.ome_label_expanded.tif"
-peaks : "/nfs/team283_imaging/AC_LNG/playground_Tong/gmm_decoding_FrFr_lung/anchor_peaks/OB01011_I2B_x20_optflow-DAPI_pyramid25.ome_label_expanded.tsv"
-masks   : ""
-outdir  : "/nfs/team283_imaging/AC_LNG/playground_Tong/gmm_decoding_FrFr_lung/spots_in_cells/"
-target_col : ""
-separator : "\t"

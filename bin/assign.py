@@ -32,7 +32,7 @@ def main(peaks, cells, stem="out"):
         current_counts = {}
         for ch in trees:
             potential_inside = trees[ch].query(cell)
-            true_in = [sp for sp in potential_inside if cell.contains(sp)]
+            true_in = [sp for sp in potential_inside if cell.is_valid and cell.contains(sp)]
             for sp in true_in:
                 ys.append(sp.y)
                 xs.append(sp.x)

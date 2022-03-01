@@ -1,6 +1,0 @@
-labels : "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_human_brain_158_DAPI_registered_40x/cell_seg/out.label_expanded.tif"
-peaks : "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_human_brain_158_DAPI_registered_40x/decoded/out.decoded_df.tsv"
-masks   : ""
-outdir  : "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_human_brain_158_DAPI_registered_40x/spot_counts_per_cell_cellpose_seg_all_genes/"
-target_col : "Name"
-separator : "\t"
