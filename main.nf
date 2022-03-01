@@ -2,10 +2,10 @@
 
 nextflow.enable.dsl=2
 
-params.labels = "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_human_brain_158_DAPI_registered_40x/cell_seg/out.label_expanded.tif"
-params.peaks = "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_human_brain_158_DAPI_registered_40x/decoded/out.decoded_df.tsv"
-params.target_col = "Name"
-params.separator = "\\t"
+params.labels = "/nfs/team283_imaging/HZ_HLB/playground_Tong/HZ_HLB_hindlimb_20220130_63x_fine_tune/HZ_HLB_KR0105_C59-FLEG_Nucleus_b1G_b1A_b1T_b1C_Meas6_A2_F1T1_max.ome_label_expanded.tif" // path to label image
+params.peaks = "/nfs/team283_imaging/JSP_HSS/playground_Tong/gmm_decoding_human_brain_158_DAPI_registered_40x/decoded/out.decoded_df.tsv" //path to decoded pandas.DataFrame
+params.target_col = "Name" //gene name column name
+params.separator = "\\t" //separator
 
 params.to_grid = false
 params.tilesize_x = 700

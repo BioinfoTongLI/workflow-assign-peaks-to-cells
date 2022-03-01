@@ -1,6 +1,0 @@
-labels : "/nfs/team283_imaging/HZ_HLB/playground_Tong/HZ_HLB_hindlimb_20220130_63x_fine_tune/HZ_HLB_KR0105_C59-FLEG_Nucleus_b1G_b1A_b1T_b1C_Meas6_A2_F1T1_max.ome_label_expanded.tif"
-peaks : "/nfs/team283_imaging/HZ_HLB/playground_Tong/HZ_HLB_hindlimb_20220130_63x_fine_tune/decoded/out_opt_flow_registered_decoded_df.tsv"
-masks   : ""
-out_dir  : "./spot_counts_per_cell/"
-target_col : "Name"
-separator : "\\t"
