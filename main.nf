@@ -148,9 +148,31 @@ process Shapely_to_label {
     """
     shapely_to_label.py --tiles_p "$tiles"
     """
-
-
 }
+
+
+process to_h5ad {
+    tag "${countTable}"
+    echo true
+
+    conda projectDir + "/conda.yaml"
+    publishDir params.out_dir, mode:'copy'
+
+    input:
+    /*path("*_assigned_peaks.csv"), emit: peaks_in_cells*/
+    path(countTable)
+    path(centroids)
+
+    output:
+    path("*.h5ad")
+
+    script:
+    """
+    count_table_2_h5ad.py --countTable ${countTable} --centroids ${centroids}
+    """
+}
+
+
 
 
 workflow {
@@ -158,6 +180,7 @@ workflow {
         params.target_col, params.separator)
     Build_STR_trees_per_channel(params.peaks, params.target_col, params.separator)
     Assign(Get_shapely_objects.out, Build_STR_trees_per_channel.out)
+    to_h5ad(Assign.out.peaks_counts, Assign.out.cell_centroids)
 }
 
 
@@ -167,5 +190,6 @@ workflow to_grid {
     Build_STR_trees_per_channel(params.peaks, params.target_col, params.separator)
     Assign(Get_grid.out, Build_STR_trees_per_channel.out)
     Shapely_to_label(Get_grid.out)
+    to_h5ad(Assign.out.peaks_counts, Assign.out.cell_centroids)
 }
 

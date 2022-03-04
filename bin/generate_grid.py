@@ -43,12 +43,12 @@ def generate_tiles(min_x, max_x, min_y, max_y, tilesize_x, tilesize_y):
 
 
 def main(stem, csv_in, target_ch, sep, tilesize_x, tilesize_y):
-    df = dd.read_csv(csv_in, sep=sep)
-    print(df.columns)
+    df = dd.read_csv(csv_in, sep=sep, dtype={'Code': 'object'})
     df.columns = map(str.lower, df.columns)
+    target_ch = target_ch.lower()
     if target_ch != "":
         mask = (
-                (df.loc[:, target_ch] != "background")
+            (df.loc[:, target_ch] != "background")
             & (df.loc[:, target_ch] != "infeasible")
             & (~df.loc[:, target_ch].isna())
         )
