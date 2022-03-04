@@ -27,6 +27,8 @@ def main(peaks, cells, stem="out"):
     ys, xs, chs, cell_indexes = [], [], [], []
     for cell_index in cells:
         cell = cells[cell_index]
+        if cell.centroid.is_empty: # ignore the shapes that don't have centoird
+           continue
         cell_centroids[cell_index] = {"y": cell.centroid.y, "x": cell.centroid.x}
 
         current_counts = {}
