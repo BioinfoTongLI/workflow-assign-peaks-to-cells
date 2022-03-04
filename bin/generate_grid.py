@@ -9,21 +9,20 @@
 """
 Assign peaks to grid
 """
-import argparse
+import fire
 import numpy as np
 from shapely.strtree import STRtree
 from shapely.geometry import Polygon, Point
 import dask.dataframe as dd
 import dask
 import pickle
-import pysnooper
 
 
-def generate_cells(min_x, max_x, min_y, max_y):
-    grid_x = np.arange(min_x, max_x, args.tilesize_x)
+def generate_tiles(min_x, max_x, min_y, max_y, tilesize_x, tilesize_y):
+    grid_x = np.arange(min_x, max_x, tilesize_x)
     grid_x_start = grid_x[:-1]
     grid_x_end = grid_x[1:] + 1
-    grid_y = np.arange(min_y, max_y, args.tilesize_y)
+    grid_y = np.arange(min_y, max_y, tilesize_y)
     grid_y_start = grid_y[:-1]
     grid_y_end = grid_y[1:] + 1
     count = 1
@@ -43,42 +42,32 @@ def generate_cells(min_x, max_x, min_y, max_y):
     return shapely_cells
 
 
-def main(args):
-    df = dd.read_csv(args.csv_in, sep=args.sep)
+def main(stem, csv_in, target_ch, sep, tilesize_x, tilesize_y):
+    df = dd.read_csv(csv_in, sep=sep)
+    print(df.columns)
     df.columns = map(str.lower, df.columns)
-    if args.target_ch != "":
+    if target_ch != "":
         mask = (
-            (df[args.target_ch] != "background")
-            & (df[args.target_ch] != "infeasible")
-            & (~df[args.target_ch].isna())
+                (df.loc[:, target_ch] != "background")
+            & (df.loc[:, target_ch] != "infeasible")
+            & (~df.loc[:, target_ch].isna())
         )
         assigned_df = df[mask]
     else:
         assigned_df = df
     max_x, min_x, max_y, min_y = dask.compute(
-        assigned_df.x.max() + args.tilesize_x,
-        assigned_df.x.min() - args.tilesize_x,
-        assigned_df.y.max() + args.tilesize_y,
-        assigned_df.y.min() - args.tilesize_y,
+        assigned_df.x_int.max() + tilesize_x,
+        assigned_df.x_int.min() - tilesize_x,
+        assigned_df.y_int.max() + tilesize_y,
+        assigned_df.y_int.min() - tilesize_y,
     )
-    with open("%s_shapely.pickle" % args.stem, "wb") as handle:
+    with open("%s_shapely.pickle" % stem, "wb") as handle:
         pickle.dump(
-            generate_cells(min_x, max_x, min_y, max_y),
+            generate_tiles(min_x, max_x, min_y, max_y, tilesize_x, tilesize_y),
             handle,
             protocol=pickle.HIGHEST_PROTOCOL,
         )
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("-stem", type=str, required=True)
-    parser.add_argument("-csv_in", type=str, required=True)
-    parser.add_argument("-target_ch", type=str, required=True)
-    parser.add_argument("-sep", type=str, required=True)
-    parser.add_argument("-tilesize_x", type=int, default=350)
-    parser.add_argument("-tilesize_y", type=int, default=350)
-
-    args = parser.parse_args()
-
-    main(args)
+    fire.Fire(main)

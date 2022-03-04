@@ -2,12 +2,12 @@
 
 nextflow.enable.dsl=2
 
-params.labels = "/nfs/team283_imaging/HZ_HLB/playground_Tong/HZ_HLB_hindlimb_20220130_63x_fine_tune/HZ_HLB_KR0105_C59-FLEG_Nucleus_b1G_b1A_b1T_b1C_Meas6_A2_F1T1_max.ome_label_expanded.tif" // path to label image
 params.peaks = "/nfs/team283_imaging/HZ_HLB/playground_Tong/HZ_HLB_hindlimb_20220130_63x_fine_tune/decoded/out_opt_flow_registered_decoded_df.tsv" //path to decoded pandas.DataFrame
 params.target_col = "Name" //gene name column name
 params.separator = "\\t" //separator
 
-params.to_grid = false
+params.labels = "/nfs/team283_imaging/HZ_HLB/playground_Tong/HZ_HLB_hindlimb_20220130_63x_fine_tune/HZ_HLB_KR0105_C59-FLEG_Nucleus_b1G_b1A_b1T_b1C_Meas6_A2_F1T1_max.ome_label_expanded.tif" // path to label image
+
 params.tilesize_x = 700
 params.tilesize_y = 700
 params.out_dir = "./test"
@@ -15,6 +15,7 @@ params.out_dir = "./test"
 
 process Get_shapely_objects {
     echo true
+    cache "lenient"
     conda projectDir + "/conda.yaml"
     publishDir params.out_dir, mode:'copy'
 
@@ -23,7 +24,28 @@ process Get_shapely_objects {
     path(peak)
     val(target_col)
     val(separator)
-    val(to_grid)
+
+    output:
+    path("*_shapely.pickle")
+
+    script:
+    stem = peak.baseName
+    """
+    label_to_shapely.py -label "${lab}"
+    """
+}
+
+
+process Get_grid {
+    echo true
+    cache "lenient"
+    conda projectDir + "/conda.yaml"
+    publishDir params.out_dir, mode:'copy'
+
+    input:
+    path(peak)
+    val(target_col)
+    val(separator)
     val(tilesize_x)
     val(tilesize_y)
 
@@ -31,15 +53,10 @@ process Get_shapely_objects {
     path("*_shapely.pickle")
 
     script:
-    if (to_grid){
-        """
-        generate_grid.py -stem "${stem}" -tilesize_x ${tilesize_x} -tilesize_y ${tilesize_y} -csv_in "${peak}" -target_ch "${target_col}" -sep "${separator}"
-        """
-    } else {
-        """
-        label_to_shapely.py -label "${lab}"
-        """
-    }
+    stem = peak.baseName
+    """
+    generate_grid.py --stem "${stem}" --tilesize_x ${tilesize_x} --tilesize_y ${tilesize_y} --csv_in "${peak}" --target_ch "${target_col}" --sep "${separator}"
+    """
 }
 
 
@@ -113,11 +130,42 @@ process Cell_filtering {
     """
 }
 
+
+process Shapely_to_label {
+    tag "${tiles}"
+    echo true
+
+    conda projectDir + "/conda.yaml"
+    publishDir params.out_dir, mode:'copy'
+
+    input:
+    path(tiles)
+
+    output:
+    path("*_label.tif")
+
+    script:
+    """
+    shapely_to_label.py --tiles_p "$tiles"
+    """
+
+
+}
+
+
 workflow {
     Get_shapely_objects(params.labels, params.peaks,
-        params.target_col, params.separator, params.to_grid,
-        params.tilesize_x, params.tilesize_y)
+        params.target_col, params.separator)
     Build_STR_trees_per_channel(params.peaks, params.target_col, params.separator)
     Assign(Get_shapely_objects.out, Build_STR_trees_per_channel.out)
+}
+
+
+workflow to_grid {
+    Get_grid(params.peaks, params.target_col,
+        params.separator, params.tilesize_x, params.tilesize_y)
+    Build_STR_trees_per_channel(params.peaks, params.target_col, params.separator)
+    Assign(Get_grid.out, Build_STR_trees_per_channel.out)
+    Shapely_to_label(Get_grid.out)
 }
 
