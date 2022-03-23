@@ -14,13 +14,13 @@ import pandas as pd
 import scanpy as sc
 
 
-def main(countTable, centroids):
+def main(countTable, centroids, stem):
     adata = pd.read_csv(countTable, index_col=0)
     adata = adata.loc[:, ~adata.columns.isin(['background', 'infeasible'])]
     coord = pd.read_csv(centroids, index_col=0)
     adata = sc.AnnData(adata)
     adata.obsm['spatial'] = coord[['x', 'y']].values
-    adata.obs['sample'] = ""
+    adata.obs['sample'] = stem
 
     # Remove cells with no mRNA
     adata.obs['total_counts'] = adata.X.sum(1)
@@ -29,7 +29,7 @@ def main(countTable, centroids):
     adata.var['total_counts'] = adata.X.sum(0)
     adata.var['n_cells_by_counts'] = (adata.X > 0).sum(0)
     adata.raw = adata
-    adata.write_h5ad("test.h5ad")
+    adata.write_h5ad(f"{stem}.h5ad")
 
 
 if __name__ == "__main__":

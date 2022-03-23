@@ -26,7 +26,7 @@ process Get_shapely_objects {
     val(separator)
 
     output:
-    path("*_shapely.pickle")
+    tuple val(stem), path("*_shapely.pickle")
 
     script:
     stem = peak.baseName
@@ -50,7 +50,7 @@ process Get_grid {
     val(tilesize_y)
 
     output:
-    path("*_shapely.pickle")
+    tuple val(stem), path("*_shapely.pickle")
 
     script:
     stem = peak.baseName
@@ -87,18 +87,18 @@ process Assign {
     publishDir params.out_dir, mode:'copy'
 
     input:
-    path(cells)
+    tuple val(stem), path(cells)
     path(peaks)
 
     output:
-    path("*_assigned_peaks.csv"), emit: peaks_in_cells
-    path("*_summary.csv"), emit: peaks_in_cells_summary
-    path("*_peak_counts.csv"), emit: peaks_counts
-    path("*_cell_centroids.csv"), emit: cell_centroids
+    path("${stem}_assigned_peaks.csv"), emit: peaks_in_cells
+    path("${stem}_summary.csv"), emit: peaks_in_cells_summary
+    tuple val(stem), path("${stem}_peak_counts.csv"), emit: peaks_counts
+    path("${stem}_cell_centroids.csv"), emit: cell_centroids
 
     script:
     """
-    assign.py -cells "$cells" -peaks "$peaks"
+    assign.py -cells "$cells" -peaks "$peaks" -stem "$stem"
     """
 }
 
@@ -160,7 +160,7 @@ process to_h5ad {
 
     input:
     /*path("*_assigned_peaks.csv"), emit: peaks_in_cells*/
-    path(countTable)
+    tuple val(stem), path(countTable)
     path(centroids)
 
     output:
@@ -168,7 +168,7 @@ process to_h5ad {
 
     script:
     """
-    count_table_2_h5ad.py --countTable ${countTable} --centroids ${centroids}
+    count_table_2_h5ad.py --countTable ${countTable} --centroids ${centroids} --stem ${stem}
     """
 }
 
