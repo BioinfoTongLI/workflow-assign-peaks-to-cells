@@ -2,7 +2,7 @@ name: assign-peaks-to-cells
 channels:
   - conda-forge
 dependencies:
-  - opencv
+  - opencv == 4.1.2
   - scikit-image
   - dask
   - pandas
@@ -11,3 +11,4 @@ dependencies:
   - pip:
     - fire
     - scanpy
+    - leidenalg

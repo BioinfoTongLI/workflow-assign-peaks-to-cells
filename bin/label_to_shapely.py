@@ -29,9 +29,9 @@ def get_shapely(label):
         if not bbox:
             continue
         cur_cell_label = i + 1
-        msk = label[bbox[0], bbox[1]] == cur_cell_label
+        msk = (label[bbox[0], bbox[1]] == cur_cell_label).astype(np.uint8).copy()
         cnts, _ = cv2.findContours(
-            msk.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+            msk, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
         )
         # if len(cnts) > 1:
             # print(len(cnts), cur_cell_label)
@@ -50,9 +50,11 @@ def get_shapely(label):
 
 
 def main(label):
+    lab = tf.imread(label).squeeze()
+    print(lab.shape)
     with open("cell_shapely.pickle", "wb") as handle:
         pickle.dump(
-            get_shapely(tf.imread(label))[0], handle, protocol=pickle.HIGHEST_PROTOCOL
+            get_shapely(lab)[0], handle, protocol=pickle.HIGHEST_PROTOCOL
         )
 
 

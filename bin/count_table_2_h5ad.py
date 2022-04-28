@@ -25,10 +25,19 @@ def main(countTable, centroids, stem):
     # Remove cells with no mRNA
     adata.obs['total_counts'] = adata.X.sum(1)
     adata.obs['n_genes_by_counts'] = (adata.X > 0).sum(1)
+    adata = adata[adata.obs.n_genes_by_counts > 0, :]
 
     adata.var['total_counts'] = adata.X.sum(0)
     adata.var['n_cells_by_counts'] = (adata.X > 0).sum(0)
+
     adata.raw = adata
+
+    sc.pp.neighbors(adata, n_neighbors=300, n_pcs=10)
+    sc.tl.umap(adata, random_state = 777)
+    sc.tl.leiden(adata, resolution = 0.25, random_state = 777)
+    sc.pl.umap(adata, color=['total_counts', "leiden"])
+    sc.tl.pca(adata, svd_solver='arpack', n_comps=30, use_highly_variable=False)
+
     adata.write_h5ad(f"{stem}.h5ad")
 
 

@@ -178,18 +178,21 @@ process to_h5ad {
 workflow {
     Get_shapely_objects(params.labels, params.peaks,
         params.target_col, params.separator)
-    Build_STR_trees_per_channel(params.peaks, params.target_col, params.separator)
-    Assign(Get_shapely_objects.out, Build_STR_trees_per_channel.out)
-    to_h5ad(Assign.out.peaks_counts, Assign.out.cell_centroids)
+    _assign(Get_shapely_objects.out)
 }
 
 
 workflow to_grid {
     Get_grid(params.peaks, params.target_col,
         params.separator, params.tilesize_x, params.tilesize_y)
-    Build_STR_trees_per_channel(params.peaks, params.target_col, params.separator)
-    Assign(Get_grid.out, Build_STR_trees_per_channel.out)
-    Shapely_to_label(Get_grid.out)
-    to_h5ad(Assign.out.peaks_counts, Assign.out.cell_centroids)
+    _assign(Get_grid.out)
 }
 
+
+workflow _assign {
+    take: shaply_objs_with_stem
+    main:
+        Build_STR_trees_per_channel(params.peaks, params.target_col, params.separator)
+        Assign(shaply_objs_with_stem, Build_STR_trees_per_channel.out)
+        to_h5ad(Assign.out.peaks_counts, Assign.out.cell_centroids)
+}
