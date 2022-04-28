@@ -2,11 +2,15 @@
 
 nextflow.enable.dsl=2
 
-params.peaks = "/nfs/team283_imaging/HZ_HLB/playground_Tong/HZ_HLB_hindlimb_20220130_63x_fine_tune/decoded/out_opt_flow_registered_decoded_df.tsv" //path to decoded pandas.DataFrame
+params.peaks = [
+    [0, "/nfs/team283_imaging/HZ_HLB/playground_Tong/HZ_HLB_hindlimb_20220130_63x_fine_tune/decoded/out_opt_flow_registered_decoded_df.tsv"] //path to decoded pandas.DataFrame
+    ]
 params.target_col = "Name" //gene name column name
 params.separator = "\\t" //separator
 
-params.labels = "/nfs/team283_imaging/HZ_HLB/playground_Tong/HZ_HLB_hindlimb_20220130_63x_fine_tune/HZ_HLB_KR0105_C59-FLEG_Nucleus_b1G_b1A_b1T_b1C_Meas6_A2_F1T1_max.ome_label_expanded.tif" // path to label image
+params.labels = [
+    [0, "/nfs/team283_imaging/HZ_HLB/playground_Tong/HZ_HLB_hindlimb_20220130_63x_fine_tune/HZ_HLB_KR0105_C59-FLEG_Nucleus_b1G_b1A_b1T_b1C_Meas6_A2_F1T1_max.ome_label_expanded.tif"]
+    ] // path to label image
 
 params.tilesize_x = 700
 params.tilesize_y = 700
@@ -17,11 +21,10 @@ process Get_shapely_objects {
     echo true
     cache "lenient"
     conda projectDir + "/conda.yaml"
-    publishDir params.out_dir, mode:'copy'
+    /*publishDir params.out_dir, mode:'copy'*/
 
     input:
-    path(lab)
-    path(peak)
+    tuple val(id), path(lab)
     val(target_col)
     val(separator)
 
@@ -29,7 +32,7 @@ process Get_shapely_objects {
     tuple val(stem), path("*_shapely.pickle")
 
     script:
-    stem = peak.baseName
+    stem = id
     """
     label_to_shapely.py -label "${lab}"
     """
@@ -40,7 +43,7 @@ process Get_grid {
     echo true
     cache "lenient"
     conda projectDir + "/conda.yaml"
-    publishDir params.out_dir, mode:'copy'
+    /*publishDir params.out_dir, mode:'copy'*/
 
     input:
     path(peak)
@@ -64,15 +67,15 @@ process Build_STR_trees_per_channel {
     echo true
     conda projectDir + "/conda.yaml"
     /*storeDir params.out_dir*/
-    publishDir params.out_dir, mode:"copy"
+    /*publishDir params.out_dir, mode:"copy"*/
 
     input:
-    path(peak)
+    tuple val(id), path(peak)
     val(target_col)
     val(separator)
 
     output:
-    path("str_peaks.pickle")
+    tuple val(id), path("str_peaks.pickle")
 
     script:
     """
@@ -84,11 +87,11 @@ process Build_STR_trees_per_channel {
 process Assign {
     /*echo true*/
     conda projectDir + "/conda.yaml"
-    publishDir params.out_dir, mode:'copy'
+    /*publishDir params.out_dir, mode:'copy'*/
+    storeDir params.out_dir + "/peaks_in_cells"
 
     input:
-    tuple val(stem), path(cells)
-    path(peaks)
+    tuple val(stem), path(cells), path(peaks)
 
     output:
     path("${stem}_assigned_peaks.csv"), emit: peaks_in_cells
@@ -176,8 +179,7 @@ process to_h5ad {
 
 
 workflow {
-    Get_shapely_objects(params.labels, params.peaks,
-        params.target_col, params.separator)
+    Get_shapely_objects(channel.from(params.labels), params.target_col, params.separator)
     _assign(Get_shapely_objects.out)
 }
 
@@ -192,7 +194,8 @@ workflow to_grid {
 workflow _assign {
     take: shaply_objs_with_stem
     main:
-        Build_STR_trees_per_channel(params.peaks, params.target_col, params.separator)
-        Assign(shaply_objs_with_stem, Build_STR_trees_per_channel.out)
-        to_h5ad(Assign.out.peaks_counts, Assign.out.cell_centroids)
+        Build_STR_trees_per_channel(channel.from(params.peaks),
+            params.target_col, params.separator)
+        Assign(shaply_objs_with_stem.join(Build_STR_trees_per_channel.out))
+        /*to_h5ad(Assign.out.peaks_counts, Assign.out.cell_centroids)*/
 }
