@@ -197,5 +197,5 @@ workflow _assign {
         Build_STR_trees_per_channel(channel.from(params.peaks),
             params.target_col, params.separator)
         Assign(shaply_objs_with_stem.join(Build_STR_trees_per_channel.out))
-        /*to_h5ad(Assign.out.peaks_counts, Assign.out.cell_centroids)*/
+        to_h5ad(Assign.out.peaks_counts, Assign.out.cell_centroids)
 }
