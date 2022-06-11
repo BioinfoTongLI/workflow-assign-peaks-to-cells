@@ -18,9 +18,10 @@ params.out_dir = "./test"
 
 
 process Get_shapely_objects {
-    echo true
+    debug true
     cache "lenient"
-    conda projectDir + "/conda.yaml"
+
+    container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
     /*publishDir params.out_dir, mode:'copy'*/
 
     input:
@@ -40,9 +41,10 @@ process Get_shapely_objects {
 
 
 process Get_grid {
-    echo true
+    debug true
     cache "lenient"
-    conda projectDir + "/conda.yaml"
+
+    container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
     /*publishDir params.out_dir, mode:'copy'*/
 
     input:
@@ -64,8 +66,9 @@ process Get_grid {
 
 
 process Build_STR_trees_per_channel {
-    echo true
-    conda projectDir + "/conda.yaml"
+    debug true
+
+    container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
     /*storeDir params.out_dir*/
     /*publishDir params.out_dir, mode:"copy"*/
 
@@ -85,8 +88,9 @@ process Build_STR_trees_per_channel {
 
 
 process Assign {
-    /*echo true*/
-    conda projectDir + "/conda.yaml"
+    /*debug true*/
+
+    container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
     /*publishDir params.out_dir, mode:'copy'*/
     storeDir params.out_dir + "/peaks_in_cells"
 
@@ -110,8 +114,9 @@ process Assign {
     Skipped for now and leave the filering to user to perform
 */
 process Cell_filtering {
-    echo true
-    conda projectDir + "/conda.yaml"
+    debug true
+
+    container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
     publishDir params.out_dir, mode:'copy'
 
     input:
@@ -136,9 +141,9 @@ process Cell_filtering {
 
 process Shapely_to_label {
     tag "${tiles}"
-    echo true
+    debug true
 
-    conda projectDir + "/conda.yaml"
+    container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
     publishDir params.out_dir, mode:'copy'
 
     input:
@@ -156,9 +161,9 @@ process Shapely_to_label {
 
 process to_h5ad {
     tag "${countTable}"
-    echo true
+    debug true
 
-    conda projectDir + "/conda.yaml"
+    container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
     publishDir params.out_dir, mode:'copy'
 
     input:
