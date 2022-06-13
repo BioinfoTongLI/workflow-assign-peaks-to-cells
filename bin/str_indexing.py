@@ -39,12 +39,12 @@ def get_STRtree_per_channel(spots_df, ch_col_name):
 def main(peak, target_ch, sep):
     spots_df = pd.read_csv(peak, sep=str(sep))
     # target_ch = "Name" if args.target_ch == "" else args.target_ch
-    # spots_df = spots_df[
-    # (spots_df[target_ch] != "background")
-    # & (spots_df[target_ch] != "infeasible")
-    # & (~spots_df[target_ch].isna())
-    # ]
-    # print(spots_df.shape)
+    spots_df = spots_df[
+        (spots_df[target_ch] != "background")
+        & (spots_df[target_ch] != "infeasible")
+        & (~spots_df[target_ch].isna())
+    ]
+    print(spots_df.shape)
     with open("str_peaks.pickle", "wb") as handle:
         pickle.dump(
             get_STRtree_per_channel(spots_df, target_ch.lower()),
