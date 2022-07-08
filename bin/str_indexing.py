@@ -36,7 +36,7 @@ def get_STRtree_per_channel(spots_df, ch_col_name):
     return trees
 
 
-def main(peak, target_ch, sep):
+def main(stem, peak, target_ch, sep):
     spots_df = pd.read_csv(peak, sep=str(sep))
     # target_ch = "Name" if args.target_ch == "" else args.target_ch
     spots_df = spots_df[
@@ -45,7 +45,7 @@ def main(peak, target_ch, sep):
         & (~spots_df[target_ch].isna())
     ]
     print(spots_df.shape)
-    with open("str_peaks.pickle", "wb") as handle:
+    with open(f"{stem}_str_peaks.pickle", "wb") as handle:
         pickle.dump(
             get_STRtree_per_channel(spots_df, target_ch.lower()),
             handle,

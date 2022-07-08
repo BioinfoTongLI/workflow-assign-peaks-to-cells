@@ -42,6 +42,8 @@ def main(peaks, cells, stem="out"):
                 cell_indexes.append(cell_index)
             current_counts[ch] = len(true_in)
         spot_counts[cell_index] = current_counts
+        del cell
+        del current_counts
 
     spots_df = pd.DataFrame(
         {"y": ys, "x": xs, "ch": chs, "ID": cell_indexes}

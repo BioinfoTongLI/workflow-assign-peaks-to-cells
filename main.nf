@@ -2,47 +2,36 @@
 
 nextflow.enable.dsl=2
 
-params.peaks = [
-    [0, "/nfs/team283_imaging/HZ_HLB/playground_Tong/HZ_HLB_hindlimb_20220130_63x_fine_tune/decoded/out_opt_flow_registered_decoded_df.tsv"] //path to decoded pandas.DataFrame
-    ]
-params.target_col = "Name" //gene name column name
+params.target_col = "Channel_Index" //gene name column name
 params.separator = "\\t" //separator
 
-params.labels = [
-    [0, "/nfs/team283_imaging/HZ_HLB/playground_Tong/HZ_HLB_hindlimb_20220130_63x_fine_tune/HZ_HLB_KR0105_C59-FLEG_Nucleus_b1G_b1A_b1T_b1C_Meas6_A2_F1T1_max.ome_label_expanded.tif"]
-    ] // path to label image
+params.tsv = "/nfs/team283_imaging/NS_DSP/playground_Tong/20220616_RNA_spot_counting/quantifications/label_and_peaks.tsv"
 
 params.tilesize_x = 700
 params.tilesize_y = 700
-params.out_dir = "./test"
+params.out_dir = "/nfs/team283_imaging/NS_DSP/playground_Tong/20220616_RNA_spot_counting/quantifications/"
 
 
 process Get_shapely_objects {
     debug true
-    cache "lenient"
-
     container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
-    /*publishDir params.out_dir, mode:'copy'*/
+    storeDir params.out_dir + "/spot_assignment" //, mode:'copy'
 
     input:
-    tuple val(id), path(lab)
-    val(target_col)
-    val(separator)
+    tuple val(stem), path(lab)
 
     output:
-    tuple val(stem), path("*_shapely.pickle")
+    tuple val(stem), path("${stem}_cell_shapely.pickle")
 
     script:
-    stem = id
     """
-    label_to_shapely.py -label "${lab}"
+    label_to_shapely.py -label "${lab}" -stem ${stem}
     """
 }
 
 
 process Get_grid {
     debug true
-    cache "lenient"
 
     container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
     /*publishDir params.out_dir, mode:'copy'*/
@@ -69,20 +58,20 @@ process Build_STR_trees_per_channel {
     debug true
 
     container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
-    /*storeDir params.out_dir*/
+    storeDir params.out_dir + "/spot_assignment"
     /*publishDir params.out_dir, mode:"copy"*/
 
     input:
-    tuple val(id), path(peak)
+    tuple val(stem), path(peak)
     val(target_col)
     val(separator)
 
     output:
-    tuple val(id), path("str_peaks.pickle")
+    tuple val(stem), path("${stem}_str_peaks.pickle")
 
     script:
     """
-    str_indexing.py -peak ${peak} -target_ch "${target_col}" -sep "${separator}"
+    str_indexing.py -peak ${peak} -target_ch "${target_col}" -sep "${separator}" -stem ${stem}
     """
 }
 
@@ -92,16 +81,17 @@ process Assign {
 
     container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
     /*publishDir params.out_dir, mode:'copy'*/
-    storeDir params.out_dir + "/peaks_in_cells"
+    storeDir params.out_dir + "/spot_assignment"
+    errorStrategy "ignore"
 
     input:
     tuple val(stem), path(cells), path(peaks)
 
     output:
-    path("${stem}_assigned_peaks.csv"), emit: peaks_in_cells
-    path("${stem}_summary.csv"), emit: peaks_in_cells_summary
+    path("${stem}_assigned_peaks.csv"), emit: peaks_in_cells, optional: true
+    path("${stem}_summary.csv"), emit: peaks_in_cells_summary, optional: true
     tuple val(stem), path("${stem}_peak_counts.csv"), emit: peaks_counts
-    path("${stem}_cell_centroids.csv"), emit: cell_centroids
+    path("${stem}_cell_centroids.csv"), emit: cell_centroids, optional: true
 
     script:
     """
@@ -160,7 +150,7 @@ process Shapely_to_label {
 
 
 process to_h5ad {
-    tag "${countTable}"
+    /*tag "${countTable}"*/
     debug true
 
     container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
@@ -172,7 +162,7 @@ process to_h5ad {
     path(centroids)
 
     output:
-    path("*.h5ad")
+    tuple val(stem), path("${stem}.h5ad")
 
     script:
     """
@@ -181,13 +171,18 @@ process to_h5ad {
 }
 
 
-
-
 workflow {
-    Get_shapely_objects(channel.from(params.labels), params.target_col, params.separator)
-    _assign(Get_shapely_objects.out)
+    Channel.fromPath(params.tsv)
+        .splitCsv(header:true)
+        .multiMap{it ->
+            labels: [it.stem, it.label]
+            peaks: [it.stem, it.peaks]
+        }.set{input_files}
+    Get_shapely_objects(input_files.labels)
+    Build_STR_trees_per_channel(input_files.peaks,
+            params.target_col, params.separator)
+    _assign(Get_shapely_objects.out.join(Build_STR_trees_per_channel.out))
 }
-
 
 workflow to_grid {
     Get_grid(params.peaks, params.target_col,
@@ -195,12 +190,9 @@ workflow to_grid {
     _assign(Get_grid.out)
 }
 
-
 workflow _assign {
     take: shaply_objs_with_stem
     main:
-        Build_STR_trees_per_channel(channel.from(params.peaks),
-            params.target_col, params.separator)
-        Assign(shaply_objs_with_stem.join(Build_STR_trees_per_channel.out))
+        Assign(shaply_objs_with_stem)
         to_h5ad(Assign.out.peaks_counts, Assign.out.cell_centroids)
 }

@@ -49,10 +49,10 @@ def get_shapely(label):
     return polygons, simpler_polys
 
 
-def main(label):
+def main(stem, label):
     lab = tf.imread(label).squeeze()
     print(lab.shape)
-    with open("cell_shapely.pickle", "wb") as handle:
+    with open(f"{stem}_cell_shapely.pickle", "wb") as handle:
         pickle.dump(
             get_shapely(lab)[0], handle, protocol=pickle.HIGHEST_PROTOCOL
         )
