@@ -14,8 +14,10 @@ params.out_dir = "/nfs/team283_imaging/NS_DSP/playground_Tong/20220616_RNA_spot_
 
 process Get_shapely_objects {
     debug true
-    container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
+    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
     storeDir params.out_dir + "/spot_assignment" //, mode:'copy'
+
+    memory "60 GB"
 
     input:
     tuple val(stem), path(lab)
@@ -33,7 +35,7 @@ process Get_shapely_objects {
 process Get_grid {
     debug true
 
-    container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
+    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
     /*publishDir params.out_dir, mode:'copy'*/
 
     input:
@@ -57,9 +59,11 @@ process Get_grid {
 process Build_STR_trees_per_channel {
     debug true
 
-    container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
+    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
     storeDir params.out_dir + "/spot_assignment"
     /*publishDir params.out_dir, mode:"copy"*/
+
+    memory "60 GB"
 
     input:
     tuple val(stem), path(peak)
@@ -77,12 +81,13 @@ process Build_STR_trees_per_channel {
 
 
 process Assign {
-    /*debug true*/
+    debug true
 
-    container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
+    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
     /*publishDir params.out_dir, mode:'copy'*/
     storeDir params.out_dir + "/spot_assignment"
-    errorStrategy "ignore"
+
+    memory "500 GB"
 
     input:
     tuple val(stem), path(cells), path(peaks)
@@ -106,7 +111,7 @@ process Assign {
 process Cell_filtering {
     debug true
 
-    container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
+    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
     publishDir params.out_dir, mode:'copy'
 
     input:
@@ -133,7 +138,7 @@ process Shapely_to_label {
     tag "${tiles}"
     debug true
 
-    container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
+    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
     publishDir params.out_dir, mode:'copy'
 
     input:
@@ -153,7 +158,9 @@ process to_h5ad {
     /*tag "${countTable}"*/
     debug true
 
-    container "gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells"
+    memory "500 GB"
+
+    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
     publishDir params.out_dir, mode:'copy'
 
     input:
