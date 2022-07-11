@@ -14,7 +14,10 @@ params.out_dir = "/nfs/team283_imaging/NS_DSP/playground_Tong/20220616_RNA_spot_
 
 process Get_shapely_objects {
     debug true
-    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
+
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        '/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif':
+        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     storeDir params.out_dir + "/spot_assignment" //, mode:'copy'
 
     memory "60 GB"
@@ -35,7 +38,9 @@ process Get_shapely_objects {
 process Get_grid {
     debug true
 
-    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        '/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif':
+        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     /*publishDir params.out_dir, mode:'copy'*/
 
     input:
@@ -59,7 +64,9 @@ process Get_grid {
 process Build_STR_trees_per_channel {
     debug true
 
-    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        '/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif':
+        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     storeDir params.out_dir + "/spot_assignment"
     /*publishDir params.out_dir, mode:"copy"*/
 
@@ -83,11 +90,13 @@ process Build_STR_trees_per_channel {
 process Assign {
     debug true
 
-    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        '/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif':
+        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     /*publishDir params.out_dir, mode:'copy'*/
     storeDir params.out_dir + "/spot_assignment"
 
-    memory "500 GB"
+    memory "300 GB"
 
     input:
     tuple val(stem), path(cells), path(peaks)
@@ -111,7 +120,9 @@ process Assign {
 process Cell_filtering {
     debug true
 
-    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        '/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif':
+        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     publishDir params.out_dir, mode:'copy'
 
     input:
@@ -138,7 +149,9 @@ process Shapely_to_label {
     tag "${tiles}"
     debug true
 
-    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        '/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif':
+        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     publishDir params.out_dir, mode:'copy'
 
     input:
@@ -158,9 +171,11 @@ process to_h5ad {
     /*tag "${countTable}"*/
     debug true
 
-    memory "500 GB"
+    memory "300 GB"
 
-    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        '/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif':
+        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     publishDir params.out_dir, mode:'copy'
 
     input:
