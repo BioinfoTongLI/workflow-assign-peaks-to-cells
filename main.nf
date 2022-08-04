@@ -2,19 +2,27 @@
 
 nextflow.enable.dsl=2
 
-params.target_col = "Channel_Index" //gene name column name
-params.separator = "\\t" //separator
+/*params.target_col = "Channel_Index" //gene name column name*/
+params.target_col = "feature_name" //gene name column name
+/*params.separator = "\\t"*/
+params.separator = ","
 
-params.tsv = "/nfs/team283_imaging/NS_DSP/playground_Tong/20220616_RNA_spot_counting/quantifications/label_and_peaks.tsv"
+/*params.tsv = "/nfs/team283_imaging/NS_DSP/playground_Tong/20220616_RNA_spot_counting/quantifications/label_and_peaks.tsv"*/
+params.tsv = "/nfs/team283_imaging/playground_Tong/Xenium_testdata/xenium_prerelease_jun20_mBrain_replicates/mBrain_ff_rep1/transcript_info.csv.gz"
 
 params.tilesize_x = 700
 params.tilesize_y = 700
-params.out_dir = "/nfs/team283_imaging/NS_DSP/playground_Tong/20220616_RNA_spot_counting/quantifications/"
+params.out_dir = "output/"
 
 
 process Get_shapely_objects {
     debug true
-    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
+
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        '/lustre/scratch117/cellgen/team283/imaging_sifs/assignment.sif':
+        'my-docker:latest'}"
+    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
+
     storeDir params.out_dir + "/spot_assignment" //, mode:'copy'
 
     memory "60 GB"
@@ -35,7 +43,10 @@ process Get_shapely_objects {
 process Get_grid {
     debug true
 
-    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        '/lustre/scratch117/cellgen/team283/imaging_sifs/assignment.sif':
+        'my-docker:latest'}"
+    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
     /*publishDir params.out_dir, mode:'copy'*/
 
     input:
@@ -44,6 +55,7 @@ process Get_grid {
     val(separator)
     val(tilesize_x)
     val(tilesize_y)
+    tuple val(x_col), val(y_col)
 
     output:
     tuple val(stem), path("*_shapely.pickle")
@@ -51,7 +63,7 @@ process Get_grid {
     script:
     stem = peak.baseName
     """
-    generate_grid.py --stem "${stem}" --tilesize_x ${tilesize_x} --tilesize_y ${tilesize_y} --csv_in "${peak}" --target_ch "${target_col}" --sep "${separator}"
+    generate_grid.py --stem "${stem}" --tilesize_x ${tilesize_x} --tilesize_y ${tilesize_y} --csv_in "${peak}" --target_ch "${target_col}" --sep "${separator}" --x_col ${x_col} --y_col ${y_col}
     """
 }
 
@@ -59,7 +71,10 @@ process Get_grid {
 process Build_STR_trees_per_channel {
     debug true
 
-    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        '/lustre/scratch117/cellgen/team283/imaging_sifs/assignment.sif':
+        'my-docker:latest'}"
+    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
     storeDir params.out_dir + "/spot_assignment"
     /*publishDir params.out_dir, mode:"copy"*/
 
@@ -69,13 +84,17 @@ process Build_STR_trees_per_channel {
     tuple val(stem), path(peak)
     val(target_col)
     val(separator)
+    tuple val(qc_feature), val(threshold)
+    tuple val(x_col), val(y_col)
+
 
     output:
     tuple val(stem), path("${stem}_str_peaks.pickle")
 
     script:
     """
-    str_indexing.py -peak ${peak} -target_ch "${target_col}" -sep "${separator}" -stem ${stem}
+    str_indexing.py -peak ${peak} -target_ch "${target_col}" -sep "${separator}" -stem ${stem} \
+        -qc_feature ${qc_feature} -threshold ${threshold} -x_col ${x_col} -y_col ${y_col}
     """
 }
 
@@ -83,11 +102,14 @@ process Build_STR_trees_per_channel {
 process Assign {
     debug true
 
-    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        '/lustre/scratch117/cellgen/team283/imaging_sifs/assignment.sif':
+        'my-docker:latest'}"
+    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
     /*publishDir params.out_dir, mode:'copy'*/
     storeDir params.out_dir + "/spot_assignment"
 
-    memory "500 GB"
+    /*memory "300 GB"*/
 
     input:
     tuple val(stem), path(cells), path(peaks)
@@ -111,7 +133,10 @@ process Assign {
 process Cell_filtering {
     debug true
 
-    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        '/lustre/scratch117/cellgen/team283/imaging_sifs/assignment.sif':
+        'my-docker:latest'}"
+    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
     publishDir params.out_dir, mode:'copy'
 
     input:
@@ -138,7 +163,10 @@ process Shapely_to_label {
     tag "${tiles}"
     debug true
 
-    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        '/lustre/scratch117/cellgen/team283/imaging_sifs/assignment.sif':
+        'my-docker:latest'}"
+    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
     publishDir params.out_dir, mode:'copy'
 
     input:
@@ -158,9 +186,12 @@ process to_h5ad {
     /*tag "${countTable}"*/
     debug true
 
-    memory "500 GB"
+    /*memory "300 GB"*/
 
-    container "/lustre/scratch117/cellgen/team283/tl10/sifs/assignment.sif"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        '/lustre/scratch117/cellgen/team283/imaging_sifs/assignment.sif':
+        'my-docker:latest'}"
+    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
     publishDir params.out_dir, mode:'copy'
 
     input:
@@ -187,14 +218,16 @@ workflow {
         }.set{input_files}
     Get_shapely_objects(input_files.labels)
     Build_STR_trees_per_channel(input_files.peaks,
-            params.target_col, params.separator)
+            params.target_col, params.separator, ["Probability", 0.9], ["x_int", "y_int"])
     _assign(Get_shapely_objects.out.join(Build_STR_trees_per_channel.out))
 }
 
 workflow to_grid {
-    Get_grid(params.peaks, params.target_col,
-        params.separator, params.tilesize_x, params.tilesize_y)
-    _assign(Get_grid.out)
+    Get_grid(params.tsv, params.target_col, params.separator,
+        params.tilesize_x, params.tilesize_y, ["x_location", "y_location"])
+    Build_STR_trees_per_channel([file(params.tsv).baseName, params.tsv],
+        params.target_col, params.separator, ["qc", 0], ["x_location", "y_location"])
+    _assign(Get_grid.out.join(Build_STR_trees_per_channel.out))
 }
 
 workflow _assign {
