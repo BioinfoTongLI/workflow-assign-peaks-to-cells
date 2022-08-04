@@ -42,7 +42,7 @@ def generate_tiles(min_x, max_x, min_y, max_y, tilesize_x, tilesize_y):
     return shapely_cells
 
 
-def main(stem, csv_in, target_ch, sep, tilesize_x, tilesize_y):
+def main(stem, csv_in, target_ch, sep, tilesize_x, tilesize_y, x_col="x_int", y_col="y_int"):
     df = dd.read_csv(csv_in, sep=sep, dtype={'Code': 'object'})
     df.columns = map(str.lower, df.columns)
     target_ch = target_ch.lower()
@@ -56,10 +56,10 @@ def main(stem, csv_in, target_ch, sep, tilesize_x, tilesize_y):
     else:
         assigned_df = df
     max_x, min_x, max_y, min_y = dask.compute(
-        assigned_df.x_int.max() + tilesize_x,
-        assigned_df.x_int.min() - tilesize_x,
-        assigned_df.y_int.max() + tilesize_y,
-        assigned_df.y_int.min() - tilesize_y,
+        assigned_df[x_col].max() + tilesize_x,
+        assigned_df[x_col].min() - tilesize_x,
+        assigned_df[y_col].max() + tilesize_y,
+        assigned_df[y_col].min() - tilesize_y,
     )
     with open("%s_shapely.pickle" % stem, "wb") as handle:
         pickle.dump(
