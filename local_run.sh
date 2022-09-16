@@ -13,7 +13,8 @@ TRACE_FILE="$MOUNT_POINT/${USER}_${DATE_WITH_TIME}_trace/registration_trace_${DA
 TMP_NF_WORK="$MOUNT_POINT/${USER}_${DATE_WITH_TIME}_work"
 
 NXF_OPTS='-Dleveldb.mmap=false' NXF_WORK=$TMP_NF_WORK nextflow -trace nextflow.executor run main.nf \
-	-params-file $1 \
 	-with-trace $TRACE_FILE \
 	-profile local \
+	-entry to_grid \
 	-resume
+	#-params-file $1 \

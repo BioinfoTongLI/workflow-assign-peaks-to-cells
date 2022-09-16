@@ -16,6 +16,7 @@ from shapely.geometry import Polygon, Point
 import dask.dataframe as dd
 import dask
 import pickle
+import tifffile as tf
 
 
 def generate_tiles(min_x, max_x, min_y, max_y, tilesize_x, tilesize_y):
@@ -42,6 +43,18 @@ def generate_tiles(min_x, max_x, min_y, max_y, tilesize_x, tilesize_y):
     return shapely_cells
 
 
+def generate_label(tiles, max_y, max_x):
+    label = np.zeros((int(round(max_y)), int(round(max_x))), dtype=np.uint32)
+    print(label.shape)
+    for lab_i in tiles:
+        bbox = tiles[lab_i].bounds
+        label[
+            slice(int(round(bbox[0])), int(round(bbox[2]))),
+            slice(int(round(bbox[1])), int(round(bbox[3])))
+            ] = lab_i
+    return label
+
+
 def main(stem, csv_in, target_ch, sep, tilesize_x, tilesize_y, x_col="x_int", y_col="y_int"):
     df = dd.read_csv(csv_in, sep=sep, dtype={'Code': 'object'})
     df.columns = map(str.lower, df.columns)
@@ -61,12 +74,16 @@ def main(stem, csv_in, target_ch, sep, tilesize_x, tilesize_y, x_col="x_int", y_
         assigned_df[y_col].max() + tilesize_y,
         assigned_df[y_col].min() - tilesize_y,
     )
+    tiles = generate_tiles(min_x, max_x, min_y, max_y, tilesize_x, tilesize_y)
+    label = generate_label(tiles, max_y, max_x)
+
     with open("%s_shapely.pickle" % stem, "wb") as handle:
         pickle.dump(
-            generate_tiles(min_x, max_x, min_y, max_y, tilesize_x, tilesize_y),
+            tiles,
             handle,
             protocol=pickle.HIGHEST_PROTOCOL,
         )
+    tf.imwrite(f"{stem}_grid_label.tif", label)
 
 
 if __name__ == "__main__":

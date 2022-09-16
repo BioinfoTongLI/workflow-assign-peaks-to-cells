@@ -8,11 +8,11 @@ params.target_col = "feature_name" //gene name column name
 params.separator = ","
 
 /*params.tsv = "/nfs/team283_imaging/NS_DSP/playground_Tong/20220616_RNA_spot_counting/quantifications/label_and_peaks.tsv"*/
-params.tsv = "/nfs/team283_imaging/playground_Tong/Xenium_testdata/xenium_prerelease_jun20_mBrain_replicates/mBrain_ff_rep1/transcript_info.csv.gz"
+params.tsv = "/nfs/team283_imaging/playground_Tong/Xenium_testdata/xenium_prerelease_jun20_mBrain_replicates/mBrain_ff_rep2/transcript_info.csv.gz"
 
-params.tilesize_x = 700
-params.tilesize_y = 700
-params.out_dir = "output/"
+params.tilesize_x = 10
+params.tilesize_y = 10
+params.out_dir = "rep2_X${params.tilesize_x}_Y${params.tilesize_y}/"
 
 
 process Get_shapely_objects {
@@ -47,7 +47,7 @@ process Get_grid {
         '/lustre/scratch117/cellgen/team283/imaging_sifs/assignment.sif':
         'my-docker:latest'}"
     containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
-    /*publishDir params.out_dir, mode:'copy'*/
+    publishDir params.out_dir + "/grid", mode:'copy'
 
     input:
     path(peak)
@@ -58,7 +58,8 @@ process Get_grid {
     tuple val(x_col), val(y_col)
 
     output:
-    tuple val(stem), path("*_shapely.pickle")
+    tuple val(stem), path("*_shapely.pickle"), emit:shapely
+    tuple val(stem), path("${stem}_grid_label.tif")
 
     script:
     stem = peak.baseName
@@ -226,8 +227,8 @@ workflow to_grid {
     Get_grid(params.tsv, params.target_col, params.separator,
         params.tilesize_x, params.tilesize_y, ["x_location", "y_location"])
     Build_STR_trees_per_channel([file(params.tsv).baseName, params.tsv],
-        params.target_col, params.separator, ["qc", 0], ["x_location", "y_location"])
-    _assign(Get_grid.out.join(Build_STR_trees_per_channel.out))
+        params.target_col, params.separator, ["qv", 0], ["x_location", "y_location"])
+    _assign(Get_grid.out.shapely.join(Build_STR_trees_per_channel.out))
 }
 
 workflow _assign {
