@@ -36,15 +36,14 @@ def get_STRtree_per_channel(spots_df, ch_col_name, x_col="x_int", y_col="y_col")
     return trees
 
 
-def main(stem, peak, target_ch, sep, x_col, y_col, qc_feature="Probability", threshold=0.9):
+def main(stem, peak, target_ch, sep, x_col, y_col):
     spots_df = pd.read_csv(peak, sep=str(sep))
     spots_df = spots_df[
         (spots_df[target_ch] != "background")
         & (spots_df[target_ch] != "infeasible")
         & (~spots_df[target_ch].isna())
+        & (spots_df[target_ch] != "1.0")
     ]
-    # Filter out peaks with low probability
-    spots_df = spots_df[spots_df[qc_feature] > threshold]
     print(spots_df.shape)
     with open(f"{stem}_str_peaks.pickle", "wb") as handle:
         pickle.dump(
