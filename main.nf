@@ -84,7 +84,6 @@ process Build_STR_trees_per_channel {
     tuple val(stem), path(peak)
     val(target_col)
     val(separator)
-    tuple val(qc_feature), val(threshold)
     tuple val(x_col), val(y_col)
 
 
@@ -94,7 +93,7 @@ process Build_STR_trees_per_channel {
     script:
     """
     str_indexing.py -peak ${peak} -target_ch "${target_col}" -sep "${separator}" -stem ${stem} \
-        -qc_feature ${qc_feature} -threshold ${threshold} -x_col ${x_col} -y_col ${y_col}
+        -x_col ${x_col} -y_col ${y_col}
     """
 }
 
@@ -219,7 +218,7 @@ workflow {
         }.set{input_files}
     Get_shapely_objects(input_files.labels)
     Build_STR_trees_per_channel(input_files.peaks,
-            params.target_col, params.separator, ["Probability", 0.9], ["x_int", "y_int"])
+            params.target_col, params.separator, ["x_int", "y_int"])
     _assign(Get_shapely_objects.out.join(Build_STR_trees_per_channel.out))
 }
 
@@ -227,7 +226,7 @@ workflow to_grid {
     Get_grid(params.tsv, params.target_col, params.separator,
         params.tilesize_x, params.tilesize_y, ["x_location", "y_location"])
     Build_STR_trees_per_channel([file(params.tsv).baseName, params.tsv],
-        params.target_col, params.separator, ["qv", 0], ["x_location", "y_location"])
+        params.target_col, params.separator, ["x_location", "y_location"])
     _assign(Get_grid.out.shapely.join(Build_STR_trees_per_channel.out))
 }
 
