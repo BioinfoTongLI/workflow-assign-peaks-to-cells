@@ -6,6 +6,7 @@ nextflow.enable.dsl=2
 params.target_col = "feature_name" //gene name column name
 /*params.separator = "\\t"*/
 params.separator = ","
+params.n_gene_min = 4
 
 /*params.tsv = "/nfs/team283_imaging/NS_DSP/playground_Tong/20220616_RNA_spot_counting/quantifications/label_and_peaks.tsv"*/
 params.tsv = "/nfs/team283_imaging/playground_Tong/Xenium_testdata/xenium_prerelease_jun20_mBrain_replicates/mBrain_ff_rep2/transcript_info.csv.gz"
@@ -198,9 +199,11 @@ process to_h5ad {
     /*path("*_assigned_peaks.csv"), emit: peaks_in_cells*/
     tuple val(stem), path(countTable)
     path(centroids)
+    val(n_gene_min)
 
     output:
     tuple val(stem), path("${stem}.h5ad")
+    tuple val(stem), path("${stem}_n_gene_min_${n_gene_min}.h5ad")
 
     script:
     """
@@ -234,5 +237,5 @@ workflow _assign {
     take: shaply_objs_with_stem
     main:
         Assign(shaply_objs_with_stem)
-        to_h5ad(Assign.out.peaks_counts, Assign.out.cell_centroids)
+        to_h5ad(Assign.out.peaks_counts, Assign.out.cell_centroids, params.n_gene_min)
 }
