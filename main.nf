@@ -14,13 +14,14 @@ params.tsv = "/nfs/team283_imaging/playground_Tong/Xenium_testdata/xenium_prerel
 params.tilesize_x = 10
 params.tilesize_y = 10
 params.out_dir = "rep2_X${params.tilesize_x}_Y${params.tilesize_y}/"
+params.sif_assignment = "/lustre/scratch126/cellgen/team283/imaging_sifs/assignment.sif"
 
 
 process Get_shapely_objects {
     debug true
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        '/lustre/scratch117/cellgen/team283/imaging_sifs/assignment.sif':
+        "${params.sif_assignment}":
         'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
     storeDir params.out_dir + "/spot_assignment" //, mode:'copy'
@@ -44,7 +45,7 @@ process Get_grid {
     debug true
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        '/lustre/scratch117/cellgen/team283/imaging_sifs/assignment.sif':
+        "${params.sif_assignment}":
         'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
     publishDir params.out_dir + "/grid", mode:'copy'
@@ -73,7 +74,7 @@ process Build_STR_trees_per_channel {
     debug true
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        '/lustre/scratch117/cellgen/team283/imaging_sifs/assignment.sif':
+        "${params.sif_assignment}":
         'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
     storeDir params.out_dir + "/spot_assignment"
@@ -103,7 +104,7 @@ process Assign {
     debug true
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        '/lustre/scratch117/cellgen/team283/imaging_sifs/assignment.sif':
+        "${params.sif_assignment}":
         'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
     /*publishDir params.out_dir, mode:'copy'*/
@@ -134,7 +135,7 @@ process Cell_filtering {
     debug true
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        '/lustre/scratch117/cellgen/team283/imaging_sifs/assignment.sif':
+        "${params.sif_assignment}":
         'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
     publishDir params.out_dir, mode:'copy'
@@ -164,7 +165,7 @@ process Shapely_to_label {
     debug true
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        '/lustre/scratch117/cellgen/team283/imaging_sifs/assignment.sif':
+        "${params.sif_assignment}":
         'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
     publishDir params.out_dir, mode:'copy'
@@ -189,7 +190,7 @@ process to_h5ad {
     /*memory "300 GB"*/
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        '/lustre/scratch117/cellgen/team283/imaging_sifs/assignment.sif':
+        "${params.sif_assignment}":
         'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
 
