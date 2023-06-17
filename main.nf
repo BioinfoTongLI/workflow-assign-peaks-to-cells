@@ -26,8 +26,6 @@ process Get_shapely_objects {
     containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
     storeDir params.out_dir + "/spot_assignment" //, mode:'copy'
 
-    memory "60 GB"
-
     input:
     tuple val(stem), path(lab)
 
@@ -80,8 +78,6 @@ process Build_STR_trees_per_channel {
     storeDir params.out_dir + "/spot_assignment"
     /*publishDir params.out_dir, mode:"copy"*/
 
-    memory "60 GB"
-
     input:
     tuple val(stem), path(peak)
     val(target_col)
@@ -109,8 +105,6 @@ process Assign {
     containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
     /*publishDir params.out_dir, mode:'copy'*/
     storeDir params.out_dir + "/spot_assignment"
-
-    /*memory "300 GB"*/
 
     input:
     tuple val(stem), path(cells), path(peaks)
@@ -195,6 +189,7 @@ process to_h5ad {
     containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
 
     publishDir params.out_dir, mode:'copy'
+    /*storeDir params.out_dir*/
 
     input:
     /*path("*_assigned_peaks.csv"), emit: peaks_in_cells*/
