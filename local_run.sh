@@ -10,7 +10,7 @@ MOUNT_POINT='/tmp/work/'
 
 TMP_NF_WORK="$MOUNT_POINT/${USER}_work"
 
-NXF_OPTS='-Dleveldb.mmap=false' NXF_WORK=$TMP_NF_WORK nextflow -trace nextflow.executor run /lustre/scratch126/cellgen/team283/tl10/workflow-assign-peaks-to-cells/main.nf \
+NXF_OPTS='-Dleveldb.mmap=false' NXF_WORK=$TMP_NF_WORK nextflow -trace nextflow.executor run /scratch/iss_decoding/nf/workflow-assign-peaks-to-cells/main.nf \
 	-params-file $1 \
 	-profile local \
 	-resume
