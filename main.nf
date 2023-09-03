@@ -203,7 +203,7 @@ process to_h5ad {
 
     script:
     """
-    count_table_2_h5ad.py --countTable ${countTable} --centroids ${centroids} --stem ${stem}
+    count_table_2_h5ad.py --countTable ${countTable} --centroids ${centroids} --stem ${stem} --n_gene_min ${params.n_gene_min}
     """
 }
 
