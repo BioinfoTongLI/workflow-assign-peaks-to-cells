@@ -90,7 +90,7 @@ process Build_STR_trees_per_channel {
 
     script:
     """
-    str_indexing.py -peak ${peak} -target_ch "${target_col}" -sep "${separator}" -stem ${stem} \
+    str_indexing.py -peak ${peak} -target_col "${target_col}" -sep "${separator}" -stem ${stem} \
         -x_col ${x_col} -y_col ${y_col}
     """
 }
