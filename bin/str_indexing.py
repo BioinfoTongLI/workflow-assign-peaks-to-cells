@@ -17,7 +17,7 @@ import pickle
 import fire
 
 
-def get_STRtree_per_channel(spots_df, target_col=None, x_col="x_int", y_col="y_col"):
+def get_STRtree_per_channel(spots_df, target_col=None, x_col="x_int", y_col="y_int"):
     trees = {}
     spots_df.columns = spots_df.columns.str.lower()
     if target_col:
