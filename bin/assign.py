@@ -21,6 +21,8 @@ def main(peaks, cells, stem="out"):
 
     with open(peaks, "rb") as handle:
         trees = pickle.load(handle)
+        if len(trees) == 1:
+            trees = trees[0]
 
     spot_counts = {}
     cell_centroids = {}
