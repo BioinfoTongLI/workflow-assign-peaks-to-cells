@@ -38,7 +38,7 @@ def get_STRtree_per_channel(spots_df, target_col=None, x_col="x_int", y_col="y_c
 
 def main(stem, peak, sep, x_col, y_col, target_col=None):
     spots_df = pd.read_csv(peak, sep=str(sep))
-    if target_col not in spots_df.columns:
+    if target_col in spots_df.columns:
         spots_df = spots_df[
             (spots_df[target_col] != "background")
             & (spots_df[target_col] != "infeasible")
