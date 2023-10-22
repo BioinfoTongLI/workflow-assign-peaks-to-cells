@@ -17,7 +17,7 @@ import pickle
 import fire
 
 
-def get_STRtree_per_channel(spots_df, target_col=None, x_col="x_int", y_col="y_int"):
+def get_STRtree_per_channel(spots_df, x_col="x_int", y_col="y_int", target_col=None):
     trees = {}
     spots_df.columns = spots_df.columns.str.lower()
     if target_col:
@@ -45,7 +45,7 @@ def main(stem, peak, sep, x_col, y_col, target_col=None):
             & (~spots_df[target_col].isna())
             & (spots_df[target_col] != "1.0")
         ]
-        str_tree = get_STRtree_per_channel(spots_df, target_col.lower(), x_col, y_col),
+        str_tree = get_STRtree_per_channel(spots_df, x_col, y_col, target_col.lower()),
     else:
         str_tree = get_STRtree_per_channel(spots_df, x_col, y_col),
     with open(f"{stem}_str_peaks.pickle", "wb") as handle:
