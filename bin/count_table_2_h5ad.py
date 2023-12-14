@@ -22,7 +22,7 @@ def compute_embeddings(adata):
     sc.tl.pca(adata, svd_solver='arpack', n_comps=30,
               use_highly_variable=False)
 
-def main(countTable, centroids, stem, n_gene_min=4):
+def main(countTable, centroids, stem, n_gene_min=4, with_embedding=True):
     adata = pd.read_csv(countTable, index_col=0)
     adata = adata.loc[:, ~adata.columns.isin(['background', 'infeasible'])]
     coord = pd.read_csv(centroids, index_col=0)
@@ -39,11 +39,13 @@ def main(countTable, centroids, stem, n_gene_min=4):
     adata.var['n_cells_by_counts'] = (adata.X > 0).sum(0)
 
     adata.raw = adata
-    compute_embeddings(adata)
+    if with_embedding:
+        compute_embeddings(adata)
     adata.write_h5ad(f"{stem}.h5ad")
 
     adata_copy = adata[adata.obs['total_counts'] >= n_gene_min]
-    compute_embeddings(adata_copy)
+    if with_embedding:
+        compute_embeddings(adata_copy)
     adata_copy.write_h5ad(f"{stem}_n_gene_min_{n_gene_min}.h5ad")
 
 
