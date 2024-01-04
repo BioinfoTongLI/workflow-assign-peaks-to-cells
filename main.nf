@@ -9,7 +9,7 @@ params.separator = ","
 params.n_gene_min = 4
 
 params.exps = [
-    ["stem": "path", "label":"label_image_path", "peaks":"peak_path"],
+    ["stem": "path", "labels":"label_image_path", "peaks":"peak_path"],
 ]
 
 params.tilesize_x = 10
@@ -214,11 +214,11 @@ process to_h5ad {
 workflow {
     exp_ch = Channel.from(params.exps)
         .multiMap{it ->
-            labels: tuple(it.stem, it.label)
+            labels: tuple(it.stem, it.labels)
             peaks: tuple(it.stem, it.peaks)
     }
-    /*exp_ch.labels.view()*/
-    /*exp_ch.peaks.view()*/
+    exp_ch.labels.view()
+    exp_ch.peaks.view()
 
     Get_shapely_objects(exp_ch.labels)
     Build_STR_trees_per_channel(exp_ch.peaks,
