@@ -7,5 +7,5 @@
 #
 
 
-docker build -t gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells .
-singularity build /lustre/scratch126/cellgen/team283/imaging_sifs/workflow-assign.sif docker-daemon://gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells:latest
+docker build -t bioinfotongli/workflow-assign-peaks-to-cells .
+singularity build /lustre/scratch126/cellgen/team283/imaging_sifs/cache/bioinfotongli-workflow-assign-peaks-to-cells-latest.img docker-daemon://bioinfotongli/workflow-assign-peaks-to-cells:latest
