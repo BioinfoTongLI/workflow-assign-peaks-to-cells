@@ -187,6 +187,7 @@ process to_h5ad {
     script:
     def args = task.ext.args ?: ''
     """
+    export NUMBA_CACHE_DIR=/tmp # to avoid numba cache error
     count_table_2_h5ad.py --countTable ${countTable} --centroids ${centroids} --stem ${stem} --n_gene_min ${params.n_gene_min} \
         ${args}
     """
