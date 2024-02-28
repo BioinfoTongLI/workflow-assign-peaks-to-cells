@@ -1,11 +1,7 @@
 #!/usr/bin/env/ nextflow
 
-nextflow.enable.dsl=2
-
-/*params.target_col = "Channel_Index" //gene name column name*/
-params.target_col = "feature_name" //gene name column name
-/*params.separator = "\\t"*/
-params.separator = ","
+params.target_col = "feature_name" //gene name column name, or "Channel_Index"
+params.separator = "," // or "\\t" or ;
 params.n_gene_min = 4
 
 params.exps = [
@@ -25,7 +21,7 @@ process Get_shapely_objects {
         "${params.sif_assignment}":
         'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
-    storeDir params.out_dir + "/spot_assignment" //, mode:'copy'
+    storeDir params.out_dir + "/spot_assignment" , mode:'copy'
 
     input:
     tuple val(stem), path(lab)
@@ -77,7 +73,6 @@ process Build_STR_trees_per_channel {
         'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
     storeDir params.out_dir + "/spot_assignment"
-    /*publishDir params.out_dir, mode:"copy"*/
 
     input:
     tuple val(stem), path(peak)
@@ -104,7 +99,6 @@ process Assign {
         "${params.sif_assignment}":
         'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
     containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
-    /*publishDir params.out_dir, mode:'copy'*/
     storeDir params.out_dir + "/spot_assignment"
 
     input:
@@ -179,10 +173,7 @@ process Shapely_to_label {
 
 
 process to_h5ad {
-    /*tag "${countTable}"*/
     debug true
-
-    /*memory "300 GB"*/
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         "${params.sif_assignment}":
@@ -190,10 +181,8 @@ process to_h5ad {
     containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
 
     publishDir params.out_dir, mode:'copy'
-    /*storeDir params.out_dir*/
 
     input:
-    /*path("*_assigned_peaks.csv"), emit: peaks_in_cells*/
     tuple val(stem), path(countTable)
     path(centroids)
     val(n_gene_min)
