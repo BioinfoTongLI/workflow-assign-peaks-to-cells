@@ -11,7 +11,8 @@ params.exps = [
 params.tilesize_x = 10
 params.tilesize_y = 10
 params.out_dir = "rep2_X${params.tilesize_x}_Y${params.tilesize_y}/"
-params.sif_assignment = "/lustre/scratch126/cellgen/team283/imaging_sifs/assignment.sif"
+params.sif_assignment = "bioinfotongli/workflow-assign-peaks-to-cells:latest"
+docker_img = "bioinfotongli/workflow-assign-peaks-to-cells:latest"
 
 
 process Get_shapely_objects {
@@ -19,9 +20,8 @@ process Get_shapely_objects {
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         "${params.sif_assignment}":
-        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
-    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
-    storeDir params.out_dir + "/spot_assignment" , mode:'copy'
+        "${docker_img}"}"
+    storeDir params.out_dir + "/spot_assignment"
 
     input:
     tuple val(stem), path(lab)
@@ -41,9 +41,8 @@ process Get_grid {
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         "${params.sif_assignment}":
-        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
-    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
-    publishDir params.out_dir + "/grid", mode:'copy'
+        "${docker_img}"}"
+    publishDir params.out_dir + "/grid"
 
     input:
     path(peak)
@@ -70,8 +69,7 @@ process Build_STR_trees_per_channel {
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         "${params.sif_assignment}":
-        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
-    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
+        "${docker_img}"}"
     storeDir params.out_dir + "/spot_assignment"
 
     input:
@@ -97,8 +95,7 @@ process Assign {
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         "${params.sif_assignment}":
-        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
-    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
+        "${docker_img}"}"
     storeDir params.out_dir + "/spot_assignment"
 
     input:
@@ -125,8 +122,7 @@ process Cell_filtering {
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         "${params.sif_assignment}":
-        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
-    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
+        "${docker_img}"}"
     publishDir params.out_dir, mode:'copy'
 
     input:
@@ -155,8 +151,7 @@ process Shapely_to_label {
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         "${params.sif_assignment}":
-        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
-    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
+        "${docker_img}"}"
     publishDir params.out_dir, mode:'copy'
 
     input:
@@ -177,9 +172,7 @@ process to_h5ad {
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         "${params.sif_assignment}":
-        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
-    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
-
+        "${docker_img}"}"
     publishDir params.out_dir, mode:'copy'
 
     input:
@@ -203,8 +196,8 @@ process to_h5ad {
 workflow {
     exp_ch = Channel.from(params.exps)
         .multiMap{it ->
-            labels: tuple(it.stem, it.labels)
-            peaks: tuple(it.stem, it.peaks)
+            labels: tuple(it.stem, file(it.labels))
+            peaks: tuple(it.stem, file(it.peaks))
     }
     exp_ch.labels.view()
     exp_ch.peaks.view()
