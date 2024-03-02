@@ -27,7 +27,7 @@ def main(countTable, centroids, stem, n_gene_min=4, with_embedding=True):
     adata = adata.loc[:, ~adata.columns.isin(['background', 'infeasible'])]
     coord = pd.read_csv(centroids, index_col=0)
     adata = sc.AnnData(adata)
-    adata.obsm['spatial'] = coord[['x', 'y']].values
+    adata.obsm['spatial'] = coord[['cell_x', 'cell_y']].values
     adata.obs['sample'] = stem
 
     # Remove cells with no mRNA
