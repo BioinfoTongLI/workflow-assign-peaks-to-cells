@@ -17,11 +17,11 @@ import pickle
 import fire
 
 
-def get_STRtree_per_channel(spots_df, ch_col_name, x_col="x_int", y_col="y_col"):
+def get_STRtree_per_channel(spots_df, x_col="x_int", y_col="y_int", target_col=None):
     trees = {}
     spots_df.columns = spots_df.columns.str.lower()
-    if ch_col_name != "":
-        for i, spots in spots_df.groupby(ch_col_name):
+    if target_col:
+        for i, spots in spots_df.groupby(target_col):
             points = [
                 Point(spots.loc[ind, x_col], spots.loc[ind, y_col])
                 for ind in spots.index
@@ -36,18 +36,21 @@ def get_STRtree_per_channel(spots_df, ch_col_name, x_col="x_int", y_col="y_col")
     return trees
 
 
-def main(stem, peak, target_ch, sep, x_col, y_col):
+def main(stem, peak, sep, x_col, y_col, target_col=None):
     spots_df = pd.read_csv(peak, sep=str(sep))
-    spots_df = spots_df[
-        (spots_df[target_ch] != "background")
-        & (spots_df[target_ch] != "infeasible")
-        & (~spots_df[target_ch].isna())
-        & (spots_df[target_ch] != "1.0")
-    ]
-    print(spots_df.shape)
+    if target_col in spots_df.columns:
+        spots_df = spots_df[
+            (spots_df[target_col] != "background")
+            & (spots_df[target_col] != "infeasible")
+            & (~spots_df[target_col].isna())
+            & (spots_df[target_col] != "1.0")
+        ]
+        str_tree = get_STRtree_per_channel(spots_df, x_col, y_col, target_col.lower()),
+    else:
+        str_tree = get_STRtree_per_channel(spots_df, x_col, y_col),
     with open(f"{stem}_str_peaks.pickle", "wb") as handle:
         pickle.dump(
-            get_STRtree_per_channel(spots_df, target_ch.lower(), x_col, y_col),
+            str_tree,
             handle,
             protocol=pickle.HIGHEST_PROTOCOL,
         )

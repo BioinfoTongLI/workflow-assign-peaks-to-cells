@@ -7,12 +7,14 @@ RUN apt-get update && \
 
 RUN python -m pip install --upgrade pip --no-cache-dir
 
-RUN pip3 install fire \
+RUN pip3 install fire==0.5.0 \
 	opencv-python-headless==4.6.0.66 \
-	scikit-image \
-	dask \
-	pandas \
-	shapely \
-	imagecodecs \
-	scanpy \
-	leidenalg
+	scikit-image==0.22.0 \
+	dask==2024.2.1 \
+	pandas==1.5.3 \
+	shapely==2.0.3 \
+	imagecodecs==2024.1.1 \
+	scanpy==1.9.0 \
+	leidenalg==0.10.2 \
+	numba==0.59.0 \
+	'matplotlib<3.7'

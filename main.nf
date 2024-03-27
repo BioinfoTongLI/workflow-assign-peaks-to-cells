@@ -1,20 +1,18 @@
 #!/usr/bin/env/ nextflow
 
-nextflow.enable.dsl=2
-
-/*params.target_col = "Channel_Index" //gene name column name*/
-params.target_col = "feature_name" //gene name column name
-/*params.separator = "\\t"*/
-params.separator = ","
+params.target_col = "feature_name" //gene name column name, or "Channel_Index"
+params.separator = "," // or "\\t" or ;
 params.n_gene_min = 4
 
-/*params.tsv = "/nfs/team283_imaging/NS_DSP/playground_Tong/20220616_RNA_spot_counting/quantifications/label_and_peaks.tsv"*/
-params.tsv = "/nfs/team283_imaging/playground_Tong/Xenium_testdata/xenium_prerelease_jun20_mBrain_replicates/mBrain_ff_rep2/transcript_info.csv.gz"
+params.exps = [
+    ["stem": "path", "labels":"label_image_path", "peaks":"peak_path"],
+]
 
 params.tilesize_x = 10
 params.tilesize_y = 10
 params.out_dir = "rep2_X${params.tilesize_x}_Y${params.tilesize_y}/"
-params.sif_assignment = "/lustre/scratch126/cellgen/team283/imaging_sifs/assignment.sif"
+params.sif_assignment = "bioinfotongli/workflow-assign-peaks-to-cells:latest"
+docker_img = "bioinfotongli/workflow-assign-peaks-to-cells:latest"
 
 
 process Get_shapely_objects {
@@ -22,9 +20,8 @@ process Get_shapely_objects {
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         "${params.sif_assignment}":
-        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
-    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
-    storeDir params.out_dir + "/spot_assignment" //, mode:'copy'
+        "${docker_img}"}"
+    storeDir params.out_dir + "/spot_assignment"
 
     input:
     tuple val(stem), path(lab)
@@ -44,9 +41,8 @@ process Get_grid {
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         "${params.sif_assignment}":
-        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
-    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
-    publishDir params.out_dir + "/grid", mode:'copy'
+        "${docker_img}"}"
+    publishDir params.out_dir + "/grid"
 
     input:
     path(peak)
@@ -73,10 +69,8 @@ process Build_STR_trees_per_channel {
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         "${params.sif_assignment}":
-        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
-    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
+        "${docker_img}"}"
     storeDir params.out_dir + "/spot_assignment"
-    /*publishDir params.out_dir, mode:"copy"*/
 
     input:
     tuple val(stem), path(peak)
@@ -90,7 +84,7 @@ process Build_STR_trees_per_channel {
 
     script:
     """
-    str_indexing.py -peak ${peak} -target_ch "${target_col}" -sep "${separator}" -stem ${stem} \
+    str_indexing.py -peak ${peak} -target_col "${target_col}" -sep "${separator}" -stem ${stem} \
         -x_col ${x_col} -y_col ${y_col}
     """
 }
@@ -101,9 +95,7 @@ process Assign {
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         "${params.sif_assignment}":
-        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
-    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
-    /*publishDir params.out_dir, mode:'copy'*/
+        "${docker_img}"}"
     storeDir params.out_dir + "/spot_assignment"
 
     input:
@@ -130,8 +122,7 @@ process Cell_filtering {
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         "${params.sif_assignment}":
-        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
-    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
+        "${docker_img}"}"
     publishDir params.out_dir, mode:'copy'
 
     input:
@@ -160,8 +151,7 @@ process Shapely_to_label {
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         "${params.sif_assignment}":
-        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
-    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
+        "${docker_img}"}"
     publishDir params.out_dir, mode:'copy'
 
     input:
@@ -178,21 +168,14 @@ process Shapely_to_label {
 
 
 process to_h5ad {
-    /*tag "${countTable}"*/
     debug true
-
-    /*memory "300 GB"*/
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         "${params.sif_assignment}":
-        'gitlab-registry.internal.sanger.ac.uk/tl10/workflow-assign-peaks-to-cells'}"
-    containerOptions "${workflow.containerEngine == 'singularity' ? '--nv':'--gpus all'}"
-
+        "${docker_img}"}"
     publishDir params.out_dir, mode:'copy'
-    /*storeDir params.out_dir*/
 
     input:
-    /*path("*_assigned_peaks.csv"), emit: peaks_in_cells*/
     tuple val(stem), path(countTable)
     path(centroids)
     val(n_gene_min)
@@ -202,21 +185,26 @@ process to_h5ad {
     tuple val(stem), path("${stem}_n_gene_min_${n_gene_min}.h5ad")
 
     script:
+    def args = task.ext.args ?: ''
     """
-    count_table_2_h5ad.py --countTable ${countTable} --centroids ${centroids} --stem ${stem}
+    export NUMBA_CACHE_DIR=/tmp # to avoid numba cache error
+    count_table_2_h5ad.py --countTable ${countTable} --centroids ${centroids} --stem ${stem} --n_gene_min ${params.n_gene_min} \
+        ${args}
     """
 }
 
 
 workflow {
-    Channel.fromPath(params.tsv)
-        .splitCsv(header:true)
+    exp_ch = Channel.from(params.exps)
         .multiMap{it ->
-            labels: [it.stem, it.label]
-            peaks: [it.stem, it.peaks]
-        }.set{input_files}
-    Get_shapely_objects(input_files.labels)
-    Build_STR_trees_per_channel(input_files.peaks,
+            labels: tuple(it.stem, file(it.labels))
+            peaks: tuple(it.stem, file(it.peaks))
+    }
+    exp_ch.labels.view()
+    exp_ch.peaks.view()
+
+    Get_shapely_objects(exp_ch.labels)
+    Build_STR_trees_per_channel(exp_ch.peaks,
             params.target_col, params.separator, ["x_int", "y_int"])
     _assign(Get_shapely_objects.out.join(Build_STR_trees_per_channel.out))
 }
