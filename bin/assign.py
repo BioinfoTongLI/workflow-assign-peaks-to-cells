@@ -9,11 +9,12 @@
 """
 Assign peaks in .csv to labelled image
 """
-import argparse
+import os
 import pandas as pd
 import pickle
 import fire
 import numpy as np
+from dask_image.imread import imread
 
 
 def main(peaks, cells, stem="out"):
@@ -52,7 +53,35 @@ def main(peaks, cells, stem="out"):
 
     cell_coordinates_df = spots_df.groupby("ID")[["cell_y", "cell_x"]].first()
     cell_coordinates_df.to_csv(f"{stem}_cell_centroids.csv")
+
+
+def naive_assign(label_image: str, peaks:str, stem: str):
+    import json
+    if os.path.isdir(peaks):
+        # peaks is a folder, assuming to be Xenium
+        with open(f"{peaks}/experiment.xenium", "r") as json_file:
+            md = json.load(json_file)
+        label = imread(label_image).compute()
+        transcripts = pd.read_csv(f"{peaks}/transcripts.csv.gz")
+        ys = (transcripts["y_location"] / md["pixel_size"]).values.astype(int)
+        xs = (transcripts["x_location"] / md["pixel_size"]).values.astype(int)
+    elif peaks.endswith(".wkt"):
+        from shapely import from_wkt
+        with open(peaks, "r") as handle:
+            peaks = from_wkt(handle.read())
+        ys, xs = [(geom.y, geom.x) for geom in peaks.geoms]
+    else:
+        raise ValueError("Unrecognized file format")
+    # This is to be amended to add cell type info
+    cell_ids_for_transcripts = label[0, ys, xs]
+    transcripts["id_with_expansion"] = cell_ids_for_transcripts
+    transcripts.to_csv(f"{stem}_with_new_cell_ids.csv")
     
 
 if __name__ == "__main__":
+    options = {
+        "STRtree": main,
+        "naive": naive_assign,
+        "version": "0.0.1",
+    }
     fire.Fire(main)
