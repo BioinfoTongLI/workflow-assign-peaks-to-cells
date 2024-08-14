@@ -202,8 +202,10 @@ process to_h5ad {
     tuple val(stem), path("${stem}_n_gene_min_${n_gene_min}.h5ad")
 
     script:
+    def args   = task.ext.args ?: ''
     """
-    count_table_2_h5ad.py --countTable ${countTable} --centroids ${centroids} --stem ${stem}
+    count_table_2_h5ad.py --countTable ${countTable} --centroids ${centroids} --stem ${stem} \
+        ${args}
     """
 }
 
